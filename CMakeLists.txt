@@ -13,4 +13,4 @@ add_subdirectory(tests)
 
 add_executable(locate ./locate.cxx ./tests/RandomPoints2D.cxx ./Point2D.cxx)
 
-add_executable(daxlocate ./daxlocate.cxx ./tests/RandomPoints2D.cxx ./Point2D.cxx ./BinPoints.h)
+add_executable(daxlocate ./daxlocate.cxx ./tests/RandomPoints2D.cxx ./Point2D.cxx ./BinPoints.h ./DaxLocator.cxx)
