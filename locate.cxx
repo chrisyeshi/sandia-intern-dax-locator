@@ -153,46 +153,42 @@ int main(void)
         std::cout << std::setw(3) << cellPointCounts[i] << ", ";
     std::cout << std::endl;
 
-    {
-        // binning a point 
-        float x, y;
-        x = y = 1.f;
-    //    std::cout << std::setw(10) << "X: ";
-    //    std::cin >> x;
-    //    std::cout << std::setw(10) << "Y: ";
-    //    std::cin >> y;
-        // inputs for binPoint
-        dax::Vector2 point(x, y);
-        dax::Vector2 origin(grid.GetOrigin()[0], grid.GetOrigin()[1]);
-        dax::Vector2 spacing(grid.GetSpacing()[0], grid.GetSpacing()[1]);
-        dax::Extent3 extent = grid.GetExtent();
-        // find the cell id the point belongs to
-        dax::Id id = binPoint(point, origin, spacing, extent);
-        // find the points in the same cell
-        std::vector<dax::Id>::iterator startItr
-            = std::find(uniqueCellIds.begin(), uniqueCellIds.end(), id);
-        // make sure the cell contains at least 1 point
-    //    if (startItr == uniqueCellIds.end())
-    //        continue;
-        dax::Id uniqueIndex = std::distance(uniqueCellIds.begin(), startItr);
-        // startint point id and number of points in this cell
-        dax::Id start = pointStartIds[uniqueIndex];
-        int count = cellPointCounts[uniqueIndex];
-        std::vector<dax::Vector2> points(count);
-        for (unsigned int i = 0; i < count; ++i)
-            points[i] = sortPoints[i + start];
-        
-        // print 
-        std::cout << std::setw(10) << "Cell Id: " << id << std::endl;
-        std::cout << std::setw(10) << "Pts X: ";
-        for (unsigned int i = 0; i < count; ++i)
-            std::cout << std::setw(6) << points[i][0] << ", ";
-        std::cout << std::endl;
-        std::cout << std::setw(10) << "Pts Y: ";
-        for (unsigned int i = 0; i < count; ++i)
-            std::cout << std::setw(6) << points[i][1] << ", ";
-        std::cout << std::endl;
-    }
+    // binning a point 
+    float x, y;
+    x = y = 1.f;
+    std::cout << std::setw(10) << "X: " << x << std::endl;
+    std::cout << std::setw(10) << "Y: " << y << std::endl;
+    // inputs for binPoint
+    dax::Vector2 point(x, y);
+    dax::Vector2 origin(grid.GetOrigin()[0], grid.GetOrigin()[1]);
+    dax::Vector2 spacing(grid.GetSpacing()[0], grid.GetSpacing()[1]);
+    dax::Extent3 extent = grid.GetExtent();
+    // find the cell id the point belongs to
+    dax::Id id = binPoint(point, origin, spacing, extent);
+    // find the points in the same cell
+    std::vector<dax::Id>::iterator startItr
+        = std::find(uniqueCellIds.begin(), uniqueCellIds.end(), id);
+    // make sure the cell contains at least 1 point
+//    if (startItr == uniqueCellIds.end())
+//        continue;
+    dax::Id uniqueIndex = std::distance(uniqueCellIds.begin(), startItr);
+    // startint point id and number of points in this cell
+    dax::Id start = pointStartIds[uniqueIndex];
+    int count = cellPointCounts[uniqueIndex];
+    std::vector<dax::Vector2> binPoints(count);
+    for (unsigned int i = 0; i < count; ++i)
+        binPoints[i] = sortPoints[i + start];
+    
+    // print 
+    std::cout << std::setw(10) << "Cell Id: " << id << std::endl;
+    std::cout << std::setw(10) << "Pts X: ";
+    for (unsigned int i = 0; i < count; ++i)
+        std::cout << std::setw(6) << binPoints[i][0] << ", ";
+    std::cout << std::endl;
+    std::cout << std::setw(10) << "Pts Y: ";
+    for (unsigned int i = 0; i < count; ++i)
+        std::cout << std::setw(6) << binPoints[i][1] << ", ";
+    std::cout << std::endl;
 
     return 0;
 }
