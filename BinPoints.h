@@ -24,8 +24,8 @@ public:
                        const dax::Extent3& extent,
                        dax::Id pointId) const
     {
-        int resolution[2] = {extent.Max[0] - extent.Min[0] + 1,
-                             extent.Max[1] - extent.Min[0] + 1};
+        int resolution[2] = {extent.Max[0] - extent.Min[0],
+                             extent.Max[1] - extent.Min[0]};
         // compute the point coordinate within the grid
         dax::Vector2 coord(point[0] - origin[0], point[1] - origin[1]);
         // which cell the point belongs

@@ -40,14 +40,14 @@ void RandomPoints2D::generate()
         // X and Y are standard normal distribution in [-1,1)
         // scale them to the according size
         float sx = (X + 3.f) / 6.f
-                 * float(extent[1] - extent[0] + 1) + float(extent[0]);
+                 * float(extent[1] - extent[0]) + float(extent[0]);
         float sy = (Y + 3.f) / 6.f
-                 * float(extent[3] - extent[2] + 1) + float(extent[2]);
+                 * float(extent[3] - extent[2]) + float(extent[2]);
         // clamp the value to be within extent
         if (sx < float(extent[0])) sx = float(extent[0]);
-        if (sx >= float(extent[1] + 1)) sx = float(extent[1]) + 0.999;
+        if (sx >= float(extent[1])) sx = float(extent[1]) - 0.0001;
         if (sy < float(extent[2])) sy = float(extent[2]);
-        if (sy >= float(extent[3] + 1)) sy = float(extent[3]) + 0.999;
+        if (sy >= float(extent[3])) sy = float(extent[3]) - 0.0001;
         // Use X, Y and point coordinate
         Point2D pt(sx, sy);
         points[i] = pt;

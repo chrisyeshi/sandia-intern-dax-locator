@@ -1,5 +1,10 @@
 #include "DaxLocator.h"
 
+#include <iostream>
+#include <iomanip>
+
+#include <dax/cont/ArrayHandleConstant.h>
+
 #include "BinPoints.h"
 
 typedef dax::cont::internal::DeviceAdapterAlgorithm<DAX_DEFAULT_DEVICE_ADAPTER_TAG> Algorithm;
@@ -26,6 +31,17 @@ DaxLocator::~DaxLocator()
 {
 }
 
+void DaxLocator::setSpacing(float x, float y)
+{
+    this->grid.SetSpacing(dax::make_Vector3(x, y, 0.0));
+}
+
+void DaxLocator::setExtent(int xmin, int xmax, int ymin, int ymax)
+{
+    this->grid.SetOrigin(dax::make_Vector3(float(xmin), float(ymin), 0.0));
+    this->grid.SetExtent(dax::make_Id3(xmin, ymin, 0), dax::make_Id3(xmax, ymax, 1));
+}
+
 void DaxLocator::setPoints(const std::vector<dax::Vector2>& points)
 {
     this->hPoints = make_ArrayHandle(points);
@@ -33,35 +49,30 @@ void DaxLocator::setPoints(const std::vector<dax::Vector2>& points)
 
 void DaxLocator::build()
 {
-    // create the uniform grid 
-    constructUniformGrid();
-
     // Step 1: map points to bin
     mapPoints2Bin();
-
-    // Step 2: sort points according to cell ids
+    // Step 2: sort points according to bucket ids
     sortPoints();
-
-    // Step 3: turn the cellIds array into offset and count format
-    // cellIds: [1, 1, 2, 2, 2, 3]
+    // Step 3: turn the bucketIds array into offset and count format
+    // bucketIds: [1, 1, 2, 2, 2, 3]
     // ==>
     // offset: [0, 2, 5]
     // count: [2, 3, 1]
-    formatCellIds();
+    formatBucketIds();
 }
 
-std::vector<dax::Id> DaxLocator::getOriCellIds() const
+std::vector<dax::Id> DaxLocator::getOriBucketIds() const
 {
-    std::vector<dax::Id> oriCellIds(hOriCellIds.GetNumberOfValues());
-    hOriCellIds.CopyInto(oriCellIds.begin());
-    return oriCellIds;
+    std::vector<dax::Id> oriBucketIds(hOriBucketIds.GetNumberOfValues());
+    hOriBucketIds.CopyInto(oriBucketIds.begin());
+    return oriBucketIds;
 }
 
-std::vector<dax::Id> DaxLocator::getCellIds() const
+std::vector<dax::Id> DaxLocator::getBucketIds() const
 {
-    std::vector<dax::Id> cellIds(hCellIds.GetNumberOfValues());
-    hCellIds.CopyInto(cellIds.begin());
-    return cellIds;
+    std::vector<dax::Id> bucketIds(hBucketIds.GetNumberOfValues());
+    hBucketIds.CopyInto(bucketIds.begin());
+    return bucketIds;
 }
 
 std::vector<dax::Vector2> DaxLocator::getPoints() const
@@ -78,42 +89,52 @@ std::vector<dax::Vector2> DaxLocator::getSortPoints() const
     return sortPoints;
 }
 
-std::vector<dax::Id> DaxLocator::getUniqueCellIds() const
+std::vector<dax::Id> DaxLocator::getUniqueBucketIds() const
 {
-    return uniqueCellIds;
+    std::vector<dax::Id> uniqueBucketIds(hUniqueBucketIds.GetNumberOfValues());
+    hUniqueBucketIds.CopyInto(uniqueBucketIds.begin());
+    return uniqueBucketIds;
 }
 
 std::vector<dax::Id> DaxLocator::getPointStartIds() const
 {
+    std::vector<dax::Id> pointStartIds(hPointStartIds.GetNumberOfValues());
+    hPointStartIds.CopyInto(pointStartIds.begin());
     return pointStartIds;
 }
 
-std::vector<int> DaxLocator::getCellPointCounts() const
+std::vector<int> DaxLocator::getBucketPointCounts() const
 {
-    return cellPointCounts;
+    std::vector<int> bucketPointCounts(hBucketPointCounts.GetNumberOfValues());
+    hBucketPointCounts.CopyInto(bucketPointCounts.begin());
+    return bucketPointCounts;
 }
 
 dax::Id DaxLocator::locatePoint(const dax::Vector2& point) const
 {
-    // find the cell id that the point belongs to
+    // find the bucket id that the point belongs to
     dax::Id id = binPoint(point);
     return id;
 }
 
-std::vector<dax::Vector2> DaxLocator::getCellPoints(const dax::Id& cellId) const
+std::vector<dax::Vector2> DaxLocator::getBucketPoints(const dax::Id& bucketId) const
 {
-    // find the points in the same cell
-    std::vector<dax::Id>::const_iterator startItr
-        = std::find(this->uniqueCellIds.begin(), this->uniqueCellIds.end(), cellId);
-    // make sure the cell contains at least 1 point
+    // variables
+    std::vector<dax::Id> uniqueBucketIds = this->getUniqueBucketIds();
+    std::vector<dax::Id> pointStartIds = this->getPointStartIds();
+    std::vector<int> bucketPointCounts = this->getBucketPointCounts();
+    // find the points in the same bucket
+    std::vector<dax::Id>::iterator startItr
+        = std::find(uniqueBucketIds.begin(), uniqueBucketIds.end(), bucketId);
+    // make sure the bucket contains at least 1 point
     // if not, return an empty array
-    if (startItr == this->uniqueCellIds.end())
+    if (startItr == uniqueBucketIds.end())
         return std::vector<dax::Vector2>();
     // if yes, get the index for the point arrays
-    dax::Id uniqueIndex = std::distance(this->uniqueCellIds.begin(), startItr);
-    // staring point id and number of points in this cell
-    dax::Id start = this->pointStartIds[uniqueIndex];
-    int count = this->cellPointCounts[uniqueIndex];
+    dax::Id uniqueIndex = std::distance(uniqueBucketIds.begin(), startItr);
+    // staring point id and number of points in this bucket
+    dax::Id start = pointStartIds[uniqueIndex];
+    int count = bucketPointCounts[uniqueIndex];
     // construct the return points array
     std::vector<dax::Vector2> points(count);
     std::vector<dax::Vector2> sortPoints = this->getSortPoints();
@@ -136,64 +157,48 @@ std::vector<dax::Vector2> DaxLocator::getCellPoints(const dax::Id& cellId) const
 //
 //////////////////////////////////////////////////////////////////////////////
 
-void DaxLocator::constructUniformGrid()
-{
-    // temporary it's a 3x3 uniform grid with each cell 1x1.
-    // expect to use some algorithm to calculate the grid parameters later.
-    grid.SetOrigin(dax::make_Vector3(0.0, 0.0, 0.0));
-    grid.SetOrigin(dax::make_Vector3(1.0, 1.0, 1.0));
-    grid.SetExtent(dax::make_Id3(0, 0, 0), dax::make_Id3(2, 2, 0));
-}
-
 void DaxLocator::mapPoints2Bin()
 {
     // use a worklet to find out which bin each point belongs to
-    // results are stored in this->hOriCellIds
+    // results are stored in this->hOriBucketIds
     Scheduler<> scheduler;
     scheduler.Invoke(dax::worklet::BinPoints(),
                      hPoints,
                      origin(),
                      spacing(),
                      extent(),
-                     this->hOriCellIds);
+                     this->hOriBucketIds);
 }
 
 void DaxLocator::sortPoints()
 {
-    // sort the point array according to the cellIds array
+    // sort the point array according to the bucketIds array
     // use the sorting functions provided by dax
     // copy into the new variables
-    Algorithm::Copy(this->hOriCellIds, this->hCellIds);
+    Algorithm::Copy(this->hOriBucketIds, this->hBucketIds);
     Algorithm::Copy(this->hPoints, this->hSortPoints);
     // sort by key
-    Algorithm::SortByKey(this->hCellIds, this->hSortPoints);
+    Algorithm::SortByKey(this->hBucketIds, this->hSortPoints);
 }
 
-void DaxLocator::formatCellIds()
+void DaxLocator::formatBucketIds()
 {
-    // apply a unique operator to the cellIds array
-    std::vector<dax::Id> cellIds = getCellIds();
-    assert(!cellIds.empty());
-    this->uniqueCellIds.push_back(cellIds[0]);
-    this->pointStartIds.push_back(0);
-    this->cellPointCounts.push_back(1);
-    for (unsigned int i = 1; i < cellIds.size(); ++i)
-    {
-        // index to the last element in uniqueCellIds
-        int uniqueIndex = uniqueCellIds.size() - 1;
-        // if the current cellIds[i] matches the last uniqueCellId 
-        // then increment the cellPointCounts
-        // else it becomes the next uniqueCellId 
-        if (cellIds[i] == uniqueCellIds[uniqueIndex])
-        {
-            this->cellPointCounts[uniqueIndex]++;
-        } else
-        {
-            this->uniqueCellIds.push_back(cellIds[i]);
-            this->pointStartIds.push_back(i);
-            this->cellPointCounts.push_back(1);
-        }
-    }
+    // use the unique operator to find out the unique bucket ids that have points
+    Algorithm::Copy(this->hBucketIds, this->hUniqueBucketIds);
+    Algorithm::Unique(this->hUniqueBucketIds);
+    // use lowerbound to find the starting positions of the ids
+    Algorithm::LowerBounds(this->hBucketIds, this->hUniqueBucketIds, // inputs
+                           this->hPointStartIds); // outputs
+
+    // calculate the count of points in each bucket
+    // apply the functor to find the counts
+    dax::Id numUniqueKeys = hUniqueBucketIds.GetNumberOfValues();
+    Offset2CountFunctor offset2Count(
+            this->hPointStartIds.PrepareForInput(),
+            this->hBucketPointCounts.PrepareForOutput(numUniqueKeys),
+            numUniqueKeys - 1,
+            this->hBucketIds.GetNumberOfValues());
+    Algorithm::Schedule(offset2Count, numUniqueKeys);
 }
 
 dax::Vector2 DaxLocator::origin() const
@@ -227,11 +232,11 @@ dax::Extent3 DaxLocator::extent() const
 
 dax::Id DaxLocator::binPoint(const dax::Vector2& point) const
 {
-    int resolution[2] = {extent().Max[0] - extent().Min[0] + 1,
-                         extent().Max[1] - extent().Min[0] + 1};
+    int resolution[2] = {extent().Max[0] - extent().Min[0],
+                         extent().Max[1] - extent().Min[0]};
     // compute the point coordinate within the grid
     dax::Vector2 coord(point[0] - origin()[0], point[1] - origin()[1]);
-    // which cell the point belongs
+    // which bucket the point belongs
     dax::Id xid, yid;
     xid = dax::math::Floor(coord[0] / spacing()[0]);
     yid = dax::math::Floor(coord[1] / spacing()[1]);
