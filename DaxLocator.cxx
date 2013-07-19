@@ -44,42 +44,17 @@ void DaxLocator::setExtent(int xmin, int xmax, int ymin, int ymax)
 
 void DaxLocator::setPoints(const std::vector<dax::Vector2>& points)
 {
-    this->hPoints = make_ArrayHandle(points);
+    this->hSortPoints = make_ArrayHandle(points);
 }
 
 void DaxLocator::build()
 {
     // Step 1: map points to bin
-    mapPoints2Bin();
+    ArrayHandle<dax::Id> hOriBucketIds = mapPoints2Bin();
     // Step 2: sort points according to bucket ids
-    sortPoints();
+    ArrayHandle<dax::Id> hBucketIds = sortPoints(hOriBucketIds);
     // Step 3: turn the bucketIds array into offset and count format
-    // bucketIds: [1, 1, 2, 2, 2, 3]
-    // ==>
-    // offset: [0, 2, 5]
-    // count: [2, 3, 1]
-    formatBucketIds();
-}
-
-std::vector<dax::Id> DaxLocator::getOriBucketIds() const
-{
-    std::vector<dax::Id> oriBucketIds(hOriBucketIds.GetNumberOfValues());
-    hOriBucketIds.CopyInto(oriBucketIds.begin());
-    return oriBucketIds;
-}
-
-std::vector<dax::Id> DaxLocator::getBucketIds() const
-{
-    std::vector<dax::Id> bucketIds(hBucketIds.GetNumberOfValues());
-    hBucketIds.CopyInto(bucketIds.begin());
-    return bucketIds;
-}
-
-std::vector<dax::Vector2> DaxLocator::getPoints() const
-{
-    std::vector<dax::Vector2> points(hPoints.GetNumberOfValues());
-    hPoints.CopyInto(points.begin());
-    return points;
+    formatBucketIds(hBucketIds);
 }
 
 std::vector<dax::Vector2> DaxLocator::getSortPoints() const
@@ -89,25 +64,18 @@ std::vector<dax::Vector2> DaxLocator::getSortPoints() const
     return sortPoints;
 }
 
-std::vector<dax::Id> DaxLocator::getUniqueBucketIds() const
+std::vector<dax::Id> DaxLocator::getPointStarts() const
 {
-    std::vector<dax::Id> uniqueBucketIds(hUniqueBucketIds.GetNumberOfValues());
-    hUniqueBucketIds.CopyInto(uniqueBucketIds.begin());
-    return uniqueBucketIds;
+    std::vector<dax::Id> pointStarts(hPointStarts.GetNumberOfValues());
+    hPointStarts.CopyInto(pointStarts.begin());
+    return pointStarts;
 }
 
-std::vector<dax::Id> DaxLocator::getPointStartIds() const
+std::vector<int> DaxLocator::getPointCounts() const
 {
-    std::vector<dax::Id> pointStartIds(hPointStartIds.GetNumberOfValues());
-    hPointStartIds.CopyInto(pointStartIds.begin());
-    return pointStartIds;
-}
-
-std::vector<int> DaxLocator::getBucketPointCounts() const
-{
-    std::vector<int> bucketPointCounts(hBucketPointCounts.GetNumberOfValues());
-    hBucketPointCounts.CopyInto(bucketPointCounts.begin());
-    return bucketPointCounts;
+    std::vector<int> pointCounts(hPointCounts.GetNumberOfValues());
+    hPointCounts.CopyInto(pointCounts.begin());
+    return pointCounts;
 }
 
 dax::Id DaxLocator::locatePoint(const dax::Vector2& point) const
@@ -120,21 +88,11 @@ dax::Id DaxLocator::locatePoint(const dax::Vector2& point) const
 std::vector<dax::Vector2> DaxLocator::getBucketPoints(const dax::Id& bucketId) const
 {
     // variables
-    std::vector<dax::Id> uniqueBucketIds = this->getUniqueBucketIds();
-    std::vector<dax::Id> pointStartIds = this->getPointStartIds();
-    std::vector<int> bucketPointCounts = this->getBucketPointCounts();
-    // find the points in the same bucket
-    std::vector<dax::Id>::iterator startItr
-        = std::find(uniqueBucketIds.begin(), uniqueBucketIds.end(), bucketId);
-    // make sure the bucket contains at least 1 point
-    // if not, return an empty array
-    if (startItr == uniqueBucketIds.end())
-        return std::vector<dax::Vector2>();
-    // if yes, get the index for the point arrays
-    dax::Id uniqueIndex = std::distance(uniqueBucketIds.begin(), startItr);
-    // staring point id and number of points in this bucket
-    dax::Id start = pointStartIds[uniqueIndex];
-    int count = bucketPointCounts[uniqueIndex];
+    std::vector<dax::Id> pointStarts = this->getPointStarts();
+    std::vector<int> pointCounts = this->getPointCounts();
+    // get point start location and count
+    dax::Id start = pointStarts[bucketId];
+    int count = pointCounts[bucketId];
     // construct the return points array
     std::vector<dax::Vector2> points(count);
     std::vector<dax::Vector2> sortPoints = this->getSortPoints();
@@ -157,48 +115,74 @@ std::vector<dax::Vector2> DaxLocator::getBucketPoints(const dax::Id& bucketId) c
 //
 //////////////////////////////////////////////////////////////////////////////
 
-void DaxLocator::mapPoints2Bin()
+ArrayHandle<dax::Id> DaxLocator::mapPoints2Bin()
 {
     // use a worklet to find out which bin each point belongs to
     // results are stored in this->hOriBucketIds
+    ArrayHandle<dax::Id> hOriBucketIds;
     Scheduler<> scheduler;
     scheduler.Invoke(dax::worklet::BinPoints(),
-                     hPoints,
+                     this->hSortPoints,
                      origin(),
                      spacing(),
                      extent(),
-                     this->hOriBucketIds);
+                     hOriBucketIds);
+    return hOriBucketIds;
 }
 
-void DaxLocator::sortPoints()
+ArrayHandle<dax::Id> DaxLocator::sortPoints(ArrayHandle<dax::Id> hOriBucketIds)
 {
     // sort the point array according to the bucketIds array
     // use the sorting functions provided by dax
     // copy into the new variables
-    Algorithm::Copy(this->hOriBucketIds, this->hBucketIds);
-    Algorithm::Copy(this->hPoints, this->hSortPoints);
+    ArrayHandle<dax::Id> hBucketIds;
+    Algorithm::Copy(hOriBucketIds, hBucketIds);
+    Algorithm::Copy(this->hSortPoints, this->hSortPoints);
     // sort by key
-    Algorithm::SortByKey(this->hBucketIds, this->hSortPoints);
+    Algorithm::SortByKey(hBucketIds, this->hSortPoints);
+    return hBucketIds;
 }
 
-void DaxLocator::formatBucketIds()
+void DaxLocator::formatBucketIds(ArrayHandle<dax::Id> hBucketIds)
 {
     // use the unique operator to find out the unique bucket ids that have points
-    Algorithm::Copy(this->hBucketIds, this->hUniqueBucketIds);
-    Algorithm::Unique(this->hUniqueBucketIds);
-    // use lowerbound to find the starting positions of the ids
-    Algorithm::LowerBounds(this->hBucketIds, this->hUniqueBucketIds, // inputs
-                           this->hPointStartIds); // outputs
+    ArrayHandle<dax::Id> hUniqueBucketIds;
+    Algorithm::Copy(hBucketIds, hUniqueBucketIds);
+    Algorithm::Unique(hUniqueBucketIds);
+    // use lowerbound to find the starting positions of the ids 
+    ArrayHandle<dax::Id> hPointStartIds;
+    Algorithm::LowerBounds(hBucketIds, hUniqueBucketIds, // inputs
+                           hPointStartIds); // outputs
 
     // calculate the count of points in each bucket
     // apply the functor to find the counts
+    ArrayHandle<int> hBucketPointCounts;
     dax::Id numUniqueKeys = hUniqueBucketIds.GetNumberOfValues();
     Offset2CountFunctor offset2Count(
-            this->hPointStartIds.PrepareForInput(),
-            this->hBucketPointCounts.PrepareForOutput(numUniqueKeys),
+            hPointStartIds.PrepareForInput(),
+            hBucketPointCounts.PrepareForOutput(numUniqueKeys),
             numUniqueKeys - 1,
-            this->hBucketIds.GetNumberOfValues());
+            hBucketIds.GetNumberOfValues());
     Algorithm::Schedule(offset2Count, numUniqueKeys);
+
+    // allocate memory for the point start array and point count array
+    int cellCount = this->grid.GetNumberOfCells();
+    // initialize point start array to -1 for emptyness
+    ArrayHandleConstant<dax::Id> hPointStartInit(-1, cellCount);
+    Algorithm::Copy(hPointStartInit, this->hPointStarts);
+    // initialize point count array to 0 for emptyness
+    ArrayHandleConstant<int> hPointCountInit( 0, cellCount);
+    Algorithm::Copy(hPointCountInit, this->hPointCounts);
+    // parallel using the hUniqueBucketIds to input the
+    // hPointStartIds and hBucketPointCounts into
+    // hPointStart and hPointCount
+    Coarse2ImplicitFunctor coarse2Implicit(
+            hUniqueBucketIds.PrepareForInput(),
+            hPointStartIds.PrepareForInput(),
+            hBucketPointCounts.PrepareForInput(),
+            this->hPointStarts.PrepareForOutput(cellCount),
+            this->hPointCounts.PrepareForOutput(cellCount));
+    Algorithm::Schedule(coarse2Implicit, numUniqueKeys);
 }
 
 dax::Vector2 DaxLocator::origin() const

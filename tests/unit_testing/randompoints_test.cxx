@@ -15,7 +15,7 @@ int main(void)
 
     // generate the points
     RandomPoints2D random;
-    random.setExtent(0, 99, 0, 99);
+    random.setExtent(0, 100, 0, 100);
     random.setPointCount(count);
     random.generate();
     std::vector<Point2D> pts1 = random.getPoints();

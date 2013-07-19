@@ -14,7 +14,7 @@ int main(void)
 {
     // first generate a bunch of random points
     RandomPoints2D random;
-    random.setExtent(0, 3, 0, 3);
+    random.setExtent(0, 2, 0, 2);
     random.setPointCount(20);
     random.generate();
     std::vector<Point2D> points = random.getPoints();
@@ -37,31 +37,12 @@ int main(void)
     locator.build();
 
     // outputs
-    std::vector<dax::Id> oriBucketIds = locator.getOriBucketIds();
-    std::vector<dax::Id> bucketIds = locator.getBucketIds();
     std::vector<dax::Vector2> sortPoints = locator.getSortPoints();
-    std::vector<dax::Id> uniqueBucketIds = locator.getUniqueBucketIds();
-    std::vector<dax::Id> pointStartIds = locator.getPointStartIds();
-    std::vector<int> bucketPointCounts = locator.getBucketPointCounts();
+    std::vector<dax::Id> pointStarts = locator.getPointStarts();
+    std::vector<int> pointCounts = locator.getPointCounts();
 
     // print
     std::cout.precision(4);
-    std::cout << std::setw(10) << "Buckets: ";
-    for (unsigned int i = 0; i < oriBucketIds.size(); ++i)
-        std::cout << std::setw(6) << oriBucketIds[i] << ", ";
-    std::cout << std::endl;
-    std::cout << std::setw(10) << "Ori X: ";
-    for (unsigned int i = 0; i < daxPoints.size(); ++i)
-        std::cout << std::setw(6) << daxPoints[i][0] << ", ";
-    std::cout << std::endl;
-    std::cout << std::setw(10) << "Ori Y: ";
-    for (unsigned int i = 0; i < daxPoints.size(); ++i)
-        std::cout << std::setw(6) << daxPoints[i][1] << ", ";
-    std::cout << std::endl;
-    std::cout << std::setw(10) << "Buckets: ";
-    for (unsigned int i = 0; i < bucketIds.size(); ++i)
-        std::cout << std::setw(6) << bucketIds[i] << ", ";
-    std::cout << std::endl;
     std::cout << std::setw(10) << "Sort X: ";
     for (unsigned int i = 0; i < sortPoints.size(); ++i)
         std::cout << std::setw(6) << sortPoints[i][0] << ", ";
@@ -70,17 +51,13 @@ int main(void)
     for (unsigned int i = 0; i < sortPoints.size(); ++i)
         std::cout << std::setw(6) << sortPoints[i][1] << ", ";
     std::cout << std::endl;
-    std::cout << std::setw(10) << "Unique: ";
-    for (unsigned int i = 0; i < uniqueBucketIds.size(); ++i)
-        std::cout << std::setw(3) << uniqueBucketIds[i] << ", ";
+    std::cout << std::setw(10) << "Pt Start: ";
+    for (unsigned int i = 0; i < pointStarts.size(); ++i)
+        std::cout << std::setw(3) << pointStarts[i] << ", ";
     std::cout << std::endl;
-    std::cout << std::setw(10) << "Start: ";
-    for (unsigned int i = 0; i < pointStartIds.size(); ++i)
-        std::cout << std::setw(3) << pointStartIds[i] << ", ";
-    std::cout << std::endl;
-    std::cout << std::setw(10) << "Count: ";
-    for (unsigned int i = 0; i < bucketPointCounts.size(); ++i)
-        std::cout << std::setw(3) << bucketPointCounts[i] << ", ";
+    std::cout << std::setw(10) << "Pt Count: ";
+    for (unsigned int i = 0; i < pointCounts.size(); ++i)
+        std::cout << std::setw(3) << pointCounts[i] << ", ";
     std::cout << std::endl;
 
     // binning a point 

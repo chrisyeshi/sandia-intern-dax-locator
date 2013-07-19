@@ -21,18 +21,13 @@ public:
     void setPoints(const std::vector<dax::Vector2>& points);
     void build();
 
-    std::vector<dax::Id> getOriBucketIds() const;
-    std::vector<dax::Id> getBucketIds() const;
-    std::vector<dax::Vector2> getPoints() const;
     std::vector<dax::Vector2> getSortPoints() const;
-    std::vector<dax::Id> getUniqueBucketIds() const;
-    std::vector<dax::Id> getPointStartIds() const;
-    std::vector<int> getBucketPointCounts() const;
+    std::vector<dax::Id> getPointStarts() const;
+    std::vector<int> getPointCounts() const;
     dax::Id locatePoint(const dax::Vector2& point) const;
     std::vector<dax::Vector2> getBucketPoints(const dax::Id& bucketId) const;
 
 protected:
-    ArrayHandle<dax::Vector2> hPoints;
     UniformGrid<> grid;
     ArrayHandle<dax::Id> hOriBucketIds;
     ArrayHandle<dax::Id> hBucketIds;
@@ -40,10 +35,12 @@ protected:
     ArrayHandle<dax::Id> hUniqueBucketIds;
     ArrayHandle<dax::Id> hPointStartIds;
     ArrayHandle<int> hBucketPointCounts;
+    ArrayHandle<dax::Id> hPointStarts;
+    ArrayHandle<dax::Id> hPointCounts;
 
-    void mapPoints2Bin();
-    void sortPoints();
-    void formatBucketIds();
+    ArrayHandle<dax::Id> mapPoints2Bin();
+    ArrayHandle<dax::Id> sortPoints(ArrayHandle<dax::Id> hOriBucketIds);
+    void formatBucketIds(ArrayHandle<dax::Id> hBucketIds);
 
     dax::Vector2 origin() const;
     dax::Vector2 spacing() const;
@@ -65,9 +62,11 @@ protected:
           : OffsetsPortal(offsetsPortal),
             CountsPortal(countsPortal),
             MaxId(maxId),
-            OffsetEnd(offsetEnd) {  }
+            OffsetEnd(offsetEnd)
+        {}
 
-        void operator()(dax::Id index) const {
+        void operator()(dax::Id index) const
+        {
           dax::Id thisOffset = this->OffsetsPortal.Get(index);
           dax::Id nextOffset;
           if (index == this->MaxId)
@@ -79,6 +78,39 @@ protected:
             nextOffset = this->OffsetsPortal.Get(index+1);
             }
           this->CountsPortal.Set(index, nextOffset - thisOffset);
+        }
+    };
+
+    // functor to translate from coarse representation to implicit representation
+    // of the grid ids
+    struct Coarse2ImplicitFunctor : dax::exec::internal::WorkletBase
+    {
+        ArrayHandle<dax::Id>::PortalConstExecution hUniqueBucketIds;
+        ArrayHandle<dax::Id>::PortalConstExecution hPointStartIds;
+        ArrayHandle<dax::Id>::PortalConstExecution hBucketPointCounts;
+        ArrayHandle<dax::Id>::PortalExecution hPointStarts;
+        ArrayHandle<int>::PortalExecution hPointCounts;
+
+        Coarse2ImplicitFunctor(
+            ArrayHandle<dax::Id>::PortalConstExecution hUniqueBucketIds_in,
+            ArrayHandle<dax::Id>::PortalConstExecution hPointStartIds_in,
+            ArrayHandle<dax::Id>::PortalConstExecution hBucketPointCounts_in,
+            ArrayHandle<dax::Id>::PortalExecution hPointStarts_in,
+            ArrayHandle<int>::PortalExecution hPointCounts_in)
+          : hUniqueBucketIds(hUniqueBucketIds_in),
+            hPointStartIds(hPointStartIds_in),
+            hBucketPointCounts(hBucketPointCounts_in),
+            hPointStarts(hPointStarts_in),
+            hPointCounts(hPointCounts_in)
+        {}
+
+        void operator()(dax::Id index) const
+        {
+            // get the bucket id from uniqueBucketIds
+            dax::Id bucketId = this->hUniqueBucketIds.Get(index);
+            // then use bucketId to index the output arrays 
+            this->hPointStarts.Set(bucketId, this->hPointStartIds.Get(index));
+            this->hPointCounts.Set(bucketId, this->hBucketPointCounts.Get(index));
         }
     };
 

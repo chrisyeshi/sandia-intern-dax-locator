@@ -8,7 +8,7 @@ RandomPoints2D::RandomPoints2D()
 {
     extent.resize(4);
     extent[0] = extent[2] = -3;
-    extent[1] = extent[3] = 2;
+    extent[1] = extent[3] = 3;
 }
 
 RandomPoints2D::~RandomPoints2D()
