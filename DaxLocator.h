@@ -8,6 +8,8 @@
 #include <dax/cont/DeviceAdapter.h>
 #include <dax/cont/internal/DeviceAdapterAlgorithm.h>
 
+#include "ExecLocator.h"
+
 using namespace dax::cont;
 
 class DaxLocator
@@ -26,6 +28,7 @@ public:
     std::vector<int> getPointCounts() const;
     dax::Id locatePoint(const dax::Vector2& point) const;
     std::vector<dax::Vector2> getBucketPoints(const dax::Id& bucketId) const;
+    ExecLocator prepareExecutionObject() const;
 
 protected:
     UniformGrid<> grid;

@@ -101,6 +101,18 @@ std::vector<dax::Vector2> DaxLocator::getBucketPoints(const dax::Id& bucketId) c
     return points;
 }
 
+ExecLocator DaxLocator::prepareExecutionObject() const
+{
+    ExecLocator ret;
+    ret.setOrigin(origin());
+    ret.setSpacing(spacing());
+    ret.setExtent(extent());
+    ret.setSortPoints(this->getSortPoints());
+    ret.setPointStarts(this->getPointStarts());
+    ret.setPointCounts(this->getPointCounts());
+    return ret;
+}
+
 //////////////////////////////////////////////////////////////////////////////
 //
 //

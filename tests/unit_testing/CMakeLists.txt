@@ -13,10 +13,8 @@ add_executable(gridspace_serial ./gridspace_test.cxx)
 add_test(gridspace_serial COMMAND ./gridspace_serial)
 
 file(COPY ./daxlocator_correct_output.txt DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-add_executable(daxlocator_output_test_serial ./daxlocator_output_test.cxx ../RandomPoints2D.cxx ../../Point2D.cxx ../../DaxLocator.cxx)
+add_executable(daxlocator_output_test_serial ./daxlocator_output_test.cxx ../RandomPoints2D.cxx ../../Point2D.cxx ../../DaxLocator.cxx ../../ExecLocator.cxx ../../BinPoints.cxx)
 add_test(daxlocator_output_serial ./daxlocator_output_test_serial)
 
-cuda_add_executable(daxlocator_output_test_cuda ./daxlocator_output_test.cxx ../RandomPoints2D.cxx ../../Point2D.cxx ../../DaxLocator.cxx)
+cuda_add_executable(daxlocator_output_test_cuda ./daxlocator_output_test.cxx ../RandomPoints2D.cxx ../../Point2D.cxx ../../DaxLocator.cxx ../../ExecLocator.cxx ../../BinPoints.cxx)
 add_test(daxlocator_output_cuda ./daxlocator_output_test_cuda)
-
-add_executable(uniformgrid_numberofcells_test_serial ./uniformgrid_numberofcells_test.cxx)
