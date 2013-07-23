@@ -1,3 +1,5 @@
+#define BOOST_SP_DISABLE_THREADS
+
 #include "DaxLocator.h"
 
 #include <iostream>
@@ -8,6 +10,77 @@
 #include "BinPoints.h"
 
 typedef dax::cont::internal::DeviceAdapterAlgorithm<DAX_DEFAULT_DEVICE_ADAPTER_TAG> Algorithm;
+
+    // temporary using a local struct to calculate the point count in each bucket
+    struct Offset2CountFunctor : dax::exec::internal::WorkletBase
+    {
+        ArrayHandle<dax::Id>::PortalConstExecution OffsetsPortal;
+        ArrayHandle<int>::PortalExecution CountsPortal;
+        dax::Id MaxId;
+        dax::Id OffsetEnd;
+
+        Offset2CountFunctor(
+            ArrayHandle<dax::Id>::PortalConstExecution offsetsPortal,
+            ArrayHandle<int>::PortalExecution countsPortal,
+            dax::Id maxId,
+            dax::Id offsetEnd)
+          : OffsetsPortal(offsetsPortal),
+            CountsPortal(countsPortal),
+            MaxId(maxId),
+            OffsetEnd(offsetEnd)
+        {}
+
+        DAX_EXEC_EXPORT
+        void operator()(dax::Id index) const
+        {
+          dax::Id thisOffset = this->OffsetsPortal.Get(index);
+          dax::Id nextOffset;
+          if (index == this->MaxId)
+            {
+            nextOffset = this->OffsetEnd;
+            }
+          else
+            {
+            nextOffset = this->OffsetsPortal.Get(index+1);
+            }
+          this->CountsPortal.Set(index, nextOffset - thisOffset);
+        }
+    };
+
+    // functor to translate from coarse representation to implicit representation
+    // of the grid ids
+    struct Coarse2ImplicitFunctor : dax::exec::internal::WorkletBase
+    {
+        ArrayHandle<dax::Id>::PortalConstExecution hUniqueBucketIds;
+        ArrayHandle<dax::Id>::PortalConstExecution hPointStartIds;
+        ArrayHandle<dax::Id>::PortalConstExecution hBucketPointCounts;
+        ArrayHandle<dax::Id>::PortalExecution hPointStarts;
+        ArrayHandle<int>::PortalExecution hPointCounts;
+
+        Coarse2ImplicitFunctor(
+            ArrayHandle<dax::Id>::PortalConstExecution hUniqueBucketIds_in,
+            ArrayHandle<dax::Id>::PortalConstExecution hPointStartIds_in,
+            ArrayHandle<dax::Id>::PortalConstExecution hBucketPointCounts_in,
+            ArrayHandle<dax::Id>::PortalExecution hPointStarts_in,
+            ArrayHandle<int>::PortalExecution hPointCounts_in)
+          : hUniqueBucketIds(hUniqueBucketIds_in),
+            hPointStartIds(hPointStartIds_in),
+            hBucketPointCounts(hBucketPointCounts_in),
+            hPointStarts(hPointStarts_in),
+            hPointCounts(hPointCounts_in)
+        {}
+
+        DAX_EXEC_EXPORT
+        void operator()(dax::Id index) const
+        {
+            // get the bucket id from uniqueBucketIds
+            dax::Id bucketId = this->hUniqueBucketIds.Get(index);
+            // then use bucketId to index the output arrays 
+            this->hPointStarts.Set(bucketId, this->hPointStartIds.Get(index));
+            this->hPointCounts.Set(bucketId, this->hBucketPointCounts.Get(index));
+        }
+    };
+
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -107,9 +180,9 @@ ExecLocator DaxLocator::prepareExecutionObject() const
     ret.setOrigin(origin());
     ret.setSpacing(spacing());
     ret.setExtent(extent());
-    ret.setSortPoints(this->getSortPoints());
-    ret.setPointStarts(this->getPointStarts());
-    ret.setPointCounts(this->getPointCounts());
+    ret.setSortPoints(this->hSortPoints.PrepareForInput());
+    ret.setPointStarts(this->hPointStarts.PrepareForInput());
+    ret.setPointCounts(this->hPointCounts.PrepareForInput());
     return ret;
 }
 

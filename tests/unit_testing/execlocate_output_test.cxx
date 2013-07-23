@@ -2,17 +2,17 @@
 
 #include <iostream>
 #include <iomanip>
+#include <fstream>
+#include <sstream>
 
 #include <dax/Types.h>
 #include <dax/cont/Scheduler.h>
 #include <dax/cont/arg/ExecutionObject.h>
 #include <dax/exec/WorkletMapField.h>
-#include <dax/cont/Timer.h>
 
 #include "Point2D.h"
 #include "tests/RandomPoints2D.h"
 #include "DaxLocator.h"
-#include "ExecLocator.h"
 
 using namespace dax::cont;
 
@@ -49,7 +49,7 @@ int main(void)
     // first generate a bunch of random points
     RandomPoints2D random;
     random.setExtent(0, 2, 0, 2);
-    random.setPointCount(1000000);
+    random.setPointCount(20);
     random.generate();
     std::vector<Point2D> points = random.getPoints();
     points.push_back(Point2D(0.99, 0.99));
@@ -63,55 +63,38 @@ int main(void)
         daxPoints[i] = daxvec;
     }
 
-    // initialize the dax::cont::Timer
-    Timer<> timer;
-    timer.Reset();
-
     // use DaxLocator class
     DaxLocator locator;
-    locator.setSpacing(0.01, 0.01);
-    locator.setExtent(0, 300, 0, 300);
+    locator.setSpacing(1.0, 1.0);
+    locator.setExtent(0, 3, 0, 3);
     locator.setPoints(daxPoints);
     locator.build();
-
-    std::cout.precision(4);
-    // search strcuture construction timing result
-    dax::Scalar time_construct = timer.GetElapsedTime();
-    std::cout << std::setw(10) << "Const: " << std::setw(6) << time_construct << std::endl;
 
     // outputs
     std::vector<dax::Vector2> sortPoints = locator.getSortPoints();
     std::vector<dax::Id> pointStarts = locator.getPointStarts();
     std::vector<int> pointCounts = locator.getPointCounts();
 
-    // print
-    /*
-    std::cout << std::setw(10) << "Sort X: ";
-    for (unsigned int i = 0; i < sortPoints.size(); ++i)
-        std::cout << std::setw(6) << sortPoints[i][0] << ", ";
-    std::cout << std::endl;
-    std::cout << std::setw(10) << "Sort Y: ";
-    for (unsigned int i = 0; i < sortPoints.size(); ++i)
-        std::cout << std::setw(6) << sortPoints[i][1] << ", ";
-    std::cout << std::endl;
-    std::cout << std::setw(10) << "Pt Start: ";
+    // print output to a stringstream for comparison purpose
+    std::stringstream ss;
+    ss.precision(4);
+    ss << std::setw(10) << "Pt Start: ";
     for (unsigned int i = 0; i < pointStarts.size(); ++i)
-        std::cout << std::setw(3) << pointStarts[i] << ", ";
-    std::cout << std::endl;
-    std::cout << std::setw(10) << "Pt Count: ";
+        ss << std::setw(3) << pointStarts[i] << ", ";
+    ss << std::endl;
+    ss << std::setw(10) << "Pt Count: ";
     for (unsigned int i = 0; i < pointCounts.size(); ++i)
-        std::cout << std::setw(3) << pointCounts[i] << ", ";
-    std::cout << std::endl;
-    */
+        ss << std::setw(3) << pointCounts[i] << ", ";
+    ss << std::endl;
 
     // setup the ExecLocator, which is a ExecutionObject
     ExecLocator execLocator = locator.prepareExecutionObject();
 
     // use the local TestWorklet to test the ExecLocator
     // 1. create test inputs, which are points
-    std::vector<dax::Vector2> testPoints(19);
-    for (int i = 0; i < 19; ++i)
-        testPoints[i] = daxPoints[i];
+    std::vector<dax::Vector2> testPoints = daxPoints;
+    for (int i = 0; i < daxPoints.size() / 2; ++i)
+        testPoints.pop_back();
     testPoints.push_back(dax::make_Vector2(0.0, 0.0));
     ArrayHandle<dax::Vector2> hTestPoints = make_ArrayHandle(testPoints);
     // 2. create output array handles
@@ -130,30 +113,47 @@ int main(void)
     hTestCounts.CopyInto(testCounts.begin());
     hTestCoinPoints.CopyInto(testCoinPoints.begin());
     // 5. print
-    std::cout << std::setw(10) << "Test X: ";
+    ss << std::setw(10) << "Test X: ";
     for (unsigned int i = 0; i < testPoints.size(); ++i)
-        std::cout << std::setw(6) << testPoints[i][0] << ", ";
-    std::cout << std::endl;
-    std::cout << std::setw(10) << "Test Y: ";
+        ss << std::setw(6) << testPoints[i][0] << ", ";
+    ss << std::endl;
+    ss << std::setw(10) << "Test Y: ";
     for (unsigned int i = 0; i < testPoints.size(); ++i)
-        std::cout << std::setw(6) << testPoints[i][1] << ", ";
-    std::cout << std::endl;
-    std::cout << std::setw(10) << "Bucket: ";
+        ss << std::setw(6) << testPoints[i][1] << ", ";
+    ss << std::endl;
+    ss << std::setw(10) << "Bucket: ";
     for (unsigned int i = 0; i < testBucketIds.size(); ++i)
-        std::cout << std::setw(6) << testBucketIds[i] << ", ";
-    std::cout << std::endl;
-    std::cout << std::setw(10) << "Count: ";
+        ss << std::setw(6) << testBucketIds[i] << ", ";
+    ss << std::endl;
+    ss << std::setw(10) << "Count: ";
     for (unsigned int i = 0; i < testCounts.size(); ++i)
-        std::cout << std::setw(6) << testCounts[i] << ", ";
-    std::cout << std::endl;
-    std::cout << std::setw(10) << "Coin X: ";
+        ss << std::setw(6) << testCounts[i] << ", ";
+    ss << std::endl;
+    ss << std::setw(10) << "Coin X: ";
     for (unsigned int i = 0; i < testCoinPoints.size(); ++i)
-        std::cout << std::setw(6) << testCoinPoints[i][0] << ", ";
-    std::cout << std::endl;
-    std::cout << std::setw(10) << "Coin Y: ";
+        ss << std::setw(6) << testCoinPoints[i][0] << ", ";
+    ss << std::endl;
+    ss << std::setw(10) << "Coin Y: ";
     for (unsigned int i = 0; i < testCoinPoints.size(); ++i)
-        std::cout << std::setw(6) << testCoinPoints[i][1] << ", ";
-    std::cout << std::endl;
+        ss << std::setw(6) << testCoinPoints[i][1] << ", ";
+    ss << std::endl;
+    // output to screen for debug
+    std::cout << "Output: " << std::endl << ss.str() << std::endl << std::endl;
+
+    // read in the correct output file for comparison
+    std::ifstream fin("./execlocate_correct_output.txt");
+    assert(fin.good());
+    std::string correct_output;
+    fin.seekg(0, std::ios::end);
+    correct_output.resize(fin.tellg());
+    fin.seekg(0, std::ios::beg);
+    fin.read(&correct_output[0], correct_output.size());
+    fin.close();
+    // output to screen for debug
+    std::cout << "Correct Output: " << std::endl << correct_output << std::endl;
+
+    // compare to the correct output
+    assert(ss.str() == correct_output);
 
     return 0;
 }

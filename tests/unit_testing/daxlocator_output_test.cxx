@@ -7,9 +7,9 @@
 
 #include <dax/Types.h>
 
-#include "../../Point2D.h"
-#include "..//RandomPoints2D.h"
-#include "../../DaxLocator.h"
+#include "Point2D.h"
+#include "tests/RandomPoints2D.h"
+#include "DaxLocator.h"
 
 // main
 int main(void)
