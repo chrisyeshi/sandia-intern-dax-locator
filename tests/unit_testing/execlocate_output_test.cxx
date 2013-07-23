@@ -10,8 +10,8 @@
 #include <dax/cont/arg/ExecutionObject.h>
 #include <dax/exec/WorkletMapField.h>
 
-#include "Point2D.h"
-#include "tests/RandomPoints2D.h"
+#include "Point3D.h"
+#include "tests/RandomPoints3D.h"
 #include "DaxLocator.h"
 
 using namespace dax::cont;
@@ -27,17 +27,17 @@ struct TestWorklet : dax::exec::WorkletMapField
     // overload operator()
     template<typename Functor>
     DAX_EXEC_EXPORT
-    void operator()(const dax::Vector2& point,
+    void operator()(const dax::Vector3& point,
                     const Functor& execLocator,
                     dax::Id& bucketId,
                     int& pointCount,
-                    dax::Vector2& coinPoint) const
+                    dax::Vector3& coinPoint) const
     {
         bucketId = execLocator.getBucketId(point);
         pointCount = execLocator.getBucketPointCount(bucketId);
         dax::Id coinId = execLocator.findPoint(point);
         if (coinId < 0)
-            coinPoint = dax::make_Vector2(-1.0, -1.0);
+            coinPoint = dax::make_Vector3(-1.0, -1.0, -1.0);
         else
             coinPoint = execLocator.getPoint(coinId);
     } 
@@ -47,37 +47,38 @@ struct TestWorklet : dax::exec::WorkletMapField
 int main(void)
 {
     // first generate a bunch of random points
-    RandomPoints2D random;
-    random.setExtent(0, 2, 0, 2);
+    RandomPoints3D random;
+    random.setExtent(0, 3, 0, 3, 0, 3);
     random.setPointCount(20);
     random.generate();
-    std::vector<Point2D> points = random.getPoints();
-    points.push_back(Point2D(0.99, 0.99));
+    std::vector<Point3D> points = random.getPoints();
+    points.push_back(Point3D(0.99, 0.99, 0.99));
 
-    // translate Point2D to dax::vector2
-    std::vector<dax::Vector2> daxPoints(points.size());
+    // translate Point3D to dax::vector3
+    std::vector<dax::Vector3> daxPoints(points.size());
     for (unsigned int i = 0; i < points.size(); ++i)
     {
-        Point2D point = points[i];
-        dax::Vector2 daxvec(point.x(), point.y());
+        Point3D point = points[i];
+        dax::Vector3 daxvec(point.x(), point.y(), point.z());
         daxPoints[i] = daxvec;
     }
 
     // use DaxLocator class
     DaxLocator locator;
-    locator.setSpacing(1.0, 1.0);
-    locator.setExtent(0, 3, 0, 3);
+    locator.setSpacing(1.0, 1.0, 1.0);
+    locator.setExtent(0, 3, 0, 3, 0, 3);
     locator.setPoints(daxPoints);
     locator.build();
 
     // outputs
-    std::vector<dax::Vector2> sortPoints = locator.getSortPoints();
+    std::vector<dax::Vector3> sortPoints = locator.getSortPoints();
     std::vector<dax::Id> pointStarts = locator.getPointStarts();
     std::vector<int> pointCounts = locator.getPointCounts();
 
     // print output to a stringstream for comparison purpose
     std::stringstream ss;
     ss.precision(4);
+    ss << std::fixed;
     ss << std::setw(10) << "Pt Start: ";
     for (unsigned int i = 0; i < pointStarts.size(); ++i)
         ss << std::setw(3) << pointStarts[i] << ", ";
@@ -92,15 +93,15 @@ int main(void)
 
     // use the local TestWorklet to test the ExecLocator
     // 1. create test inputs, which are points
-    std::vector<dax::Vector2> testPoints = daxPoints;
+    std::vector<dax::Vector3> testPoints = daxPoints;
     for (int i = 0; i < daxPoints.size() / 2; ++i)
         testPoints.pop_back();
-    testPoints.push_back(dax::make_Vector2(0.0, 0.0));
-    ArrayHandle<dax::Vector2> hTestPoints = make_ArrayHandle(testPoints);
+    testPoints.push_back(dax::make_Vector3(0.0, 0.0, 0.0));
+    ArrayHandle<dax::Vector3> hTestPoints = make_ArrayHandle(testPoints);
     // 2. create output array handles
     ArrayHandle<dax::Id> hTestBucketIds;
     ArrayHandle<int> hTestCounts;
-    ArrayHandle<dax::Vector2> hTestCoinPoints;
+    ArrayHandle<dax::Vector3> hTestCoinPoints;
     // 3. run the worklet
     Scheduler<> scheduler;
     scheduler.Invoke(TestWorklet(), hTestPoints, execLocator,
@@ -108,7 +109,7 @@ int main(void)
     // 4. copy the output
     std::vector<dax::Id> testBucketIds(hTestBucketIds.GetNumberOfValues());
     std::vector<int> testCounts(hTestCounts.GetNumberOfValues());
-    std::vector<dax::Vector2> testCoinPoints(hTestCoinPoints.GetNumberOfValues());
+    std::vector<dax::Vector3> testCoinPoints(hTestCoinPoints.GetNumberOfValues());
     hTestBucketIds.CopyInto(testBucketIds.begin());
     hTestCounts.CopyInto(testCounts.begin());
     hTestCoinPoints.CopyInto(testCoinPoints.begin());
@@ -120,6 +121,10 @@ int main(void)
     ss << std::setw(10) << "Test Y: ";
     for (unsigned int i = 0; i < testPoints.size(); ++i)
         ss << std::setw(6) << testPoints[i][1] << ", ";
+    ss << std::endl;
+    ss << std::setw(10) << "Test Z: ";
+    for (unsigned int i = 0; i < testPoints.size(); ++i)
+        ss << std::setw(6) << testPoints[i][2] << ", ";
     ss << std::endl;
     ss << std::setw(10) << "Bucket: ";
     for (unsigned int i = 0; i < testBucketIds.size(); ++i)
@@ -136,6 +141,10 @@ int main(void)
     ss << std::setw(10) << "Coin Y: ";
     for (unsigned int i = 0; i < testCoinPoints.size(); ++i)
         ss << std::setw(6) << testCoinPoints[i][1] << ", ";
+    ss << std::endl;
+    ss << std::setw(10) << "Coin Z: ";
+    for (unsigned int i = 0; i < testCoinPoints.size(); ++i)
+        ss << std::setw(6) << testCoinPoints[i][2] << ", ";
     ss << std::endl;
     // output to screen for debug
     std::cout << "Output: " << std::endl << ss.str() << std::endl << std::endl;

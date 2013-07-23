@@ -37,7 +37,7 @@ void RandomPoints2D::generate()
         float V = drand48();
         float X = sqrt(-2.f * log(U)) * cos(2.f * M_PI * V);
         float Y = sqrt(-2.f * log(U)) * sin(2.f * M_PI * V);
-        // X and Y are standard normal distribution in [-1,1)
+        // X and Y are standard normal distribution
         // scale them to the according size
         float sx = (X + 3.f) / 6.f
                  * float(extent[1] - extent[0]) + float(extent[0]);

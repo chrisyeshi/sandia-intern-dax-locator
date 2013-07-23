@@ -7,34 +7,34 @@
 
 #include <dax/Types.h>
 
-#include "Point2D.h"
-#include "tests/RandomPoints2D.h"
+#include "Point3D.h"
+#include "tests/RandomPoints3D.h"
 #include "DaxLocator.h"
 
 // main
 int main(void)
 {
     // first generate a bunch of random points
-    RandomPoints2D random;
-    random.setExtent(0, 4, 0, 4);
+    RandomPoints3D random;
+    random.setExtent(0, 3, 0, 3, 0, 3);
     random.setPointCount(20);
     random.generate();
-    std::vector<Point2D> points = random.getPoints();
-    points.push_back(Point2D(0.99, 0.99));
+    std::vector<Point3D> points = random.getPoints();
+    points.push_back(Point3D(0.99, 0.99, 0.99));
 
     // translate Point2D to dax::vector2
-    std::vector<dax::Vector2> daxPoints(points.size());
+    std::vector<dax::Vector3> daxPoints(points.size());
     for (unsigned int i = 0; i < points.size(); ++i)
     {
-        Point2D point = points[i];
-        dax::Vector2 daxvec(point.x(), point.y());
+        Point3D point = points[i];
+        dax::Vector3 daxvec(point.x(), point.y(), point.z());
         daxPoints[i] = daxvec;
     }
 
     // use DaxLocator class
     DaxLocator locator;
-    locator.setSpacing(1.0, 1.0);
-    locator.setExtent(0, 4, 0, 4);
+    locator.setSpacing(1.0, 1.0, 1.0);
+    locator.setExtent(0, 3, 0, 3, 0, 3);
     locator.setPoints(daxPoints);
     locator.build();
 
@@ -45,6 +45,7 @@ int main(void)
     // print
     std::stringstream ss;
     ss.precision(4);
+    ss << std::fixed;
     ss << std::setw(10) << "Pt Start: ";
     for (unsigned int i = 0; i < pointStarts.size(); ++i)
         ss << std::setw(3) << pointStarts[i] << ", ";
@@ -57,15 +58,16 @@ int main(void)
     // binning a point 
     {
         // inputs for binPoint
-        float x, y;
-        x = y = 1.f;
+        float x, y, z;
+        x = y = z = 1.f;
         ss << std::setw(10) << "X: " << x << std::endl;
         ss << std::setw(10) << "Y: " << y << std::endl;
-        dax::Vector2 point(x, y);
+        ss << std::setw(10) << "Z: " << z << std::endl;
+        dax::Vector3 point(x, y, z);
         // find the bucket id the point belongs to
         dax::Id id = locator.locatePoint(point);
         // find the points in the same bucket
-        std::vector<dax::Vector2> points = locator.getBucketPoints(id);
+        std::vector<dax::Vector3> points = locator.getBucketPoints(id);
         
         // print 
         ss << std::setw(10) << "Bucket Id: " << id << std::endl;

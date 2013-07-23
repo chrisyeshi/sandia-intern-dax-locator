@@ -13,7 +13,6 @@ public:
 
     void setPointCount(int count);
     void setExtent(int xmin, int xmax, int ymin, int ymax);
-    std::vector<int> getSize() const;
     void generate();
     void write(const char *path) const;
     void write(const std::string& path) const;

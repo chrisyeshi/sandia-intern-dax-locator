@@ -40,6 +40,6 @@ void testStdNormal(const std::vector<Point2D>& pts,
     {
         standard[i] = sqrt(squaresum[i] / float(pts.size()) - mean[i] * mean[i]);
         std::cout << "Std[" << i << "] = " << standard[i] << std::endl;
-        assert(fabs(standard[i] - exp_std[i]) < 0.1);
+        assert(fabs(standard[i] - exp_std[i]) < 0.2);
     }
 }

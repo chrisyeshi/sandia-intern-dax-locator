@@ -19,23 +19,23 @@ public:
     DaxLocator();
     virtual ~DaxLocator();
 
-    void setSpacing(float x, float y);
-    void setExtent(int xmin, int xmax, int ymin, int ymax);
-    void setPoints(const std::vector<dax::Vector2>& points);
+    void setSpacing(float x, float y, float z);
+    void setExtent(int xmin, int xmax, int ymin, int ymax, int zmin, int zmax);
+    void setPoints(const std::vector<dax::Vector3>& points);
     void build();
 
-    std::vector<dax::Vector2> getSortPoints() const;
+    std::vector<dax::Vector3> getSortPoints() const;
     std::vector<dax::Id> getPointStarts() const;
     std::vector<int> getPointCounts() const;
-    dax::Id locatePoint(const dax::Vector2& point) const;
-    std::vector<dax::Vector2> getBucketPoints(const dax::Id& bucketId) const;
+    dax::Id locatePoint(const dax::Vector3& point) const;
+    std::vector<dax::Vector3> getBucketPoints(const dax::Id& bucketId) const;
     ExecLocator prepareExecutionObject() const;
 
 protected:
     UniformGrid<> grid;
     ArrayHandle<dax::Id> hOriBucketIds;
     ArrayHandle<dax::Id> hBucketIds;
-    ArrayHandle<dax::Vector2> hSortPoints;
+    ArrayHandle<dax::Vector3> hSortPoints;
     ArrayHandle<dax::Id> hUniqueBucketIds;
     ArrayHandle<dax::Id> hPointStartIds;
     ArrayHandle<int> hBucketPointCounts;
@@ -46,13 +46,13 @@ protected:
     ArrayHandle<dax::Id> sortPoints(ArrayHandle<dax::Id> hOriBucketIds);
     void formatBucketIds(ArrayHandle<dax::Id> hBucketIds);
 
-    dax::Vector2 origin() const;
-    dax::Vector2 spacing() const;
+    dax::Vector3 origin() const;
+    dax::Vector3 spacing() const;
     dax::Extent3 extent() const;
 
 private:
     // CPU version of mapping a single point into a bin
-    dax::Id binPoint(const dax::Vector2& point) const;
+    dax::Id binPoint(const dax::Vector3& point) const;
 };
 
 #endif //__DAXLOCATOR_H__

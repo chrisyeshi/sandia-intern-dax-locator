@@ -23,16 +23,18 @@ configure_file(execlocate.cxx ${CMAKE_CURRENT_BINARY_DIR}/execlocate.cu COPYONLY
 
 add_executable(locate ./locate.cxx ./tests/RandomPoints2D.cxx ./Point2D.cxx)
 
-add_executable(daxlocate_serial ./daxlocate.cxx ./tests/RandomPoints2D.cxx ./Point2D.cxx ./DaxLocator.cxx ./ExecLocator.cxx)
+add_executable(daxlocate_serial ./daxlocate.cxx ./tests/RandomPoints3D.cxx ./Point3D.cxx ./Point2D.cxx ./DaxLocator.cxx ./ExecLocator.cxx)
 cuda_add_executable(daxlocate_cuda ${CMAKE_CURRENT_BINARY_DIR}/daxlocate.cu
-                                   ./tests/RandomPoints2D.cxx
+                                   ./tests/RandomPoints3D.cxx
+                                   ./Point3D.cxx
                                    ./Point2D.cxx
                                    ${CMAKE_CURRENT_BINARY_DIR}/DaxLocator.cu
                                    ${CMAKE_CURRENT_BINARY_DIR}/ExecLocator.cu)
 
-add_executable(execlocate_serial ./execlocate.cxx ./tests/RandomPoints2D.cxx ./Point2D.cxx ./DaxLocator.cxx ./ExecLocator.cxx)
+add_executable(execlocate_serial ./execlocate.cxx ./tests/RandomPoints3D.cxx ./Point3D.cxx ./Point2D.cxx ./DaxLocator.cxx ./ExecLocator.cxx)
 cuda_add_executable(execlocate_cuda ${CMAKE_CURRENT_BINARY_DIR}/execlocate.cu
-                                    ./tests/RandomPoints2D.cxx
+                                    ./tests/RandomPoints3D.cxx
+                                    ./Point3D.cxx
                                     ./Point2D.cxx
                                     ${CMAKE_CURRENT_BINARY_DIR}/DaxLocator.cu
                                     ${CMAKE_CURRENT_BINARY_DIR}/ExecLocator.cu)

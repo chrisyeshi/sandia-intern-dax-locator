@@ -18,10 +18,10 @@ ExecLocator::ExecLocator()
 {
 }
 
-ExecLocator::ExecLocator(const dax::Vector2& origin,
-                         const dax::Vector2& spacing,
+ExecLocator::ExecLocator(const dax::Vector3& origin,
+                         const dax::Vector3& spacing,
                          const dax::Extent3& extent,
-                         ArrayHandle<dax::Vector2>::PortalConstExecution sortPoints,
+                         ArrayHandle<dax::Vector3>::PortalConstExecution sortPoints,
                          ArrayHandle<dax::Id>::PortalConstExecution pointStarts,
                          ArrayHandle<int>::PortalConstExecution pointCounts)
                        : origin(origin),
@@ -33,12 +33,12 @@ ExecLocator::ExecLocator(const dax::Vector2& origin,
 {
 }
 
-void ExecLocator::setOrigin(const dax::Vector2& origin)
+void ExecLocator::setOrigin(const dax::Vector3& origin)
 {
     this->origin = origin;
 }
 
-void ExecLocator::setSpacing(const dax::Vector2& spacing)
+void ExecLocator::setSpacing(const dax::Vector3& spacing)
 {
     this->spacing = spacing;
 }
@@ -48,7 +48,7 @@ void ExecLocator::setExtent(const dax::Extent3& extent)
     this->extent = extent;
 }
 
-void ExecLocator::setSortPoints(ArrayHandle<dax::Vector2>::PortalConstExecution sortPoints)
+void ExecLocator::setSortPoints(ArrayHandle<dax::Vector3>::PortalConstExecution sortPoints)
 {
     this->sortPoints = sortPoints;
 }

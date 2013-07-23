@@ -13,27 +13,28 @@ class ExecLocator : public dax::exec::ExecutionObjectBase
 {
 public:
     ExecLocator();
-    ExecLocator(const dax::Vector2& origin,
-                const dax::Vector2& spacing,
+    ExecLocator(const dax::Vector3& origin,
+                const dax::Vector3& spacing,
                 const dax::Extent3& extent,
-                ArrayHandle<dax::Vector2>::PortalConstExecution sortPoints,
+                ArrayHandle<dax::Vector3>::PortalConstExecution sortPoints,
                 ArrayHandle<dax::Id>::PortalConstExecution pointStarts,
                 ArrayHandle<int>::PortalConstExecution pointCounts);
 
-    void setOrigin(const dax::Vector2& origin);
-    void setSpacing(const dax::Vector2& spacing);
+    void setOrigin(const dax::Vector3& origin);
+    void setSpacing(const dax::Vector3& spacing);
     void setExtent(const dax::Extent3& extent);
-    void setSortPoints(ArrayHandle<dax::Vector2>::PortalConstExecution sortPoints);
+    void setSortPoints(ArrayHandle<dax::Vector3>::PortalConstExecution sortPoints);
     void setPointStarts(ArrayHandle<dax::Id>::PortalConstExecution pointStarts);
     void setPointCounts(ArrayHandle<int>::PortalConstExecution pointCounts);
 
     // find bucket Id that a point is in
     DAX_EXEC_EXPORT
-    dax::Id getBucketId(const dax::Vector2& point) const
+    dax::Id getBucketId(const dax::Vector3& point) const
     {
         // make sure the point is within extent
         if (point[0] < extent.Min[0] || point[0] >= extent.Max[0]
-         || point[1] < extent.Min[1] || point[1] >= extent.Max[1])
+         || point[1] < extent.Min[1] || point[1] >= extent.Max[1]
+         || point[2] < extent.Min[2] || point[2] >= extent.Max[2])
             return -1;
         // use the helper function from Binpoints.h to find the bucket id
         return binPoint(point);
@@ -68,7 +69,7 @@ public:
 */
     
     // find coincident point
-    DAX_EXEC_EXPORT dax::Id findPoint(const dax::Vector2& point) const
+    DAX_EXEC_EXPORT dax::Id findPoint(const dax::Vector3& point) const
     {
         // in which bucket
         dax::Id bucketId = this->getBucketId(point);
@@ -78,7 +79,7 @@ public:
         for (unsigned int i = 0; i < count; ++i)
         {
             dax::Id pointId = i + start;
-            dax::Vector2 samplePoint = sortPoints.Get(pointId);
+            dax::Vector3 samplePoint = sortPoints.Get(pointId);
             if (coincident(point, samplePoint))
                 return pointId;
         }
@@ -87,31 +88,31 @@ public:
     }
 
     // get a point by the point Id of sortPoints
-    DAX_EXEC_EXPORT dax::Vector2 getPoint(const dax::Id& pointId) const
+    DAX_EXEC_EXPORT dax::Vector3 getPoint(const dax::Id& pointId) const
     {
         // check pointId range
         if (pointId < 0 || pointId >= sortPoints.GetNumberOfValues())
-            return dax::Vector2();
+            return dax::Vector3();
         // index sortPoints to get the point
         return sortPoints.Get(pointId);
     }
 
     // TODO: not supporting yet...
-    DAX_EXEC_EXPORT dax::Id findNearestPoint(const dax::Vector2& point) const
+    DAX_EXEC_EXPORT dax::Id findNearestPoint(const dax::Vector3& point) const
     {
         return -1;
     }
 
 protected:
-    dax::Vector2 origin;
-    dax::Vector2 spacing;
+    dax::Vector3 origin;
+    dax::Vector3 spacing;
     dax::Extent3 extent;
-    ArrayHandle<dax::Vector2>::PortalConstExecution sortPoints;
+    ArrayHandle<dax::Vector3>::PortalConstExecution sortPoints;
     ArrayHandle<dax::Id>::PortalConstExecution pointStarts;
     ArrayHandle<int>::PortalConstExecution pointCounts;
 
     DAX_EXEC_CONT_EXPORT
-    bool coincident(const dax::Vector2& point1, const dax::Vector2& point2) const
+    bool coincident(const dax::Vector3& point1, const dax::Vector3& point2) const
     {
         // two points are coincident when both coordinates are
         // within the tolerence value
@@ -119,21 +120,28 @@ protected:
             return false;
         if (fabs(point1[1] - point2[1]) > 0.0001)
             return false;
+        if (fabs(point1[2] - point2[2]) > 0.0001)
+            return false;
         return true;
     }
 
+    // TODO: refactor is to BinPoints.h
     DAX_EXEC_CONT_EXPORT
-    dax::Id binPoint(const dax::Vector2& point) const
+    dax::Id binPoint(const dax::Vector3& point) const
     {
-        int resolution[2] = {extent.Max[0] - extent.Min[0],
-                             extent.Max[1] - extent.Min[0]};
+        int resolution[3] = {extent.Max[0] - extent.Min[0],
+                             extent.Max[1] - extent.Min[1],
+                             extent.Max[2] - extent.Min[2]};
         // compute the point coordinate within the grid
-        dax::Vector2 coord(point[0] - origin[0], point[1] - origin[1]);
-        // which cell the point belongs
-        dax::Id xid, yid;
+        dax::Vector3 coord(point[0] - origin[0],
+                           point[1] - origin[1],
+                           point[2] - origin[2]);
+        // which bucket the point belongs
+        dax::Id xid, yid, zid;
         xid = dax::math::Floor(coord[0] / spacing[0]);
         yid = dax::math::Floor(coord[1] / spacing[1]);
-        return xid + yid * resolution[0];
+        zid = dax::math::Floor(coord[2] / spacing[2]);
+        return xid + yid * resolution[0] + zid * resolution[0] * resolution[2];
     }
 
 private:

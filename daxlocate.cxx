@@ -5,43 +5,44 @@
 
 #include <dax/Types.h>
 
-#include "Point2D.h"
-#include "tests/RandomPoints2D.h"
+#include "Point3D.h"
+#include "tests/RandomPoints3D.h"
 #include "DaxLocator.h"
 
 // main
 int main(void)
 {
     // first generate a bunch of random points
-    RandomPoints2D random;
-    random.setExtent(0, 2, 0, 2);
+    RandomPoints3D random;
+    random.setExtent(0, 3, 0, 3, 0, 3);
     random.setPointCount(20);
     random.generate();
-    std::vector<Point2D> points = random.getPoints();
-    points.push_back(Point2D(0.99, 0.99));
+    std::vector<Point3D> points = random.getPoints();
+    points.push_back(Point3D(0.99, 0.99, 0.99));
 
     // translate Point2D to dax::vector2
-    std::vector<dax::Vector2> daxPoints(points.size());
+    std::vector<dax::Vector3> daxPoints(points.size());
     for (unsigned int i = 0; i < points.size(); ++i)
     {
-        Point2D point = points[i];
-        dax::Vector2 daxvec(point.x(), point.y());
+        Point3D point = points[i];
+        dax::Vector3 daxvec(point.x(), point.y(), point.z());
         daxPoints[i] = daxvec;
     }
 
     // use DaxLocator class
     DaxLocator locator;
-    locator.setSpacing(1.0, 1.0);
-    locator.setExtent(0, 3, 0, 3);
+    locator.setSpacing(1.0, 1.0, 1.0);
+    locator.setExtent(0, 3, 0, 3, 0, 3);
     locator.setPoints(daxPoints);
     locator.build();
 
     // outputs
-    std::vector<dax::Vector2> sortPoints = locator.getSortPoints();
+    std::vector<dax::Vector3> sortPoints = locator.getSortPoints();
     std::vector<dax::Id> pointStarts = locator.getPointStarts();
     std::vector<int> pointCounts = locator.getPointCounts();
 
     // print
+    std::cout << std::fixed;
     std::cout.precision(4);
     std::cout << std::setw(10) << "Sort X: ";
     for (unsigned int i = 0; i < sortPoints.size(); ++i)
@@ -50,6 +51,10 @@ int main(void)
     std::cout << std::setw(10) << "Sort Y: ";
     for (unsigned int i = 0; i < sortPoints.size(); ++i)
         std::cout << std::setw(6) << sortPoints[i][1] << ", ";
+    std::cout << std::endl;
+    std::cout << std::setw(10) << "Sort Z: ";
+    for (unsigned int i = 0; i < sortPoints.size(); ++i)
+        std::cout << std::setw(6) << sortPoints[i][2] << ", ";
     std::cout << std::endl;
     std::cout << std::setw(10) << "Pt Start: ";
     for (unsigned int i = 0; i < pointStarts.size(); ++i)
@@ -64,16 +69,18 @@ int main(void)
     while (true)
     {
         // inputs for binPoint
-        float x, y;
+        float x, y, z;
         std::cout << std::setw(10) << "X: ";
         std::cin >> x;
         std::cout << std::setw(10) << "Y: ";
         std::cin >> y;
-        dax::Vector2 point(x, y);
+        std::cout << std::setw(10) << "Z: ";
+        std::cin >> z;
+        dax::Vector3 point(x, y, z);
         // find the bucket id the point belongs to
         dax::Id id = locator.locatePoint(point);
         // find the points in the same bucket
-        std::vector<dax::Vector2> points = locator.getBucketPoints(id);
+        std::vector<dax::Vector3> points = locator.getBucketPoints(id);
         
         // print 
         std::cout << std::setw(10) << "Bucket Id: " << id << std::endl;
@@ -84,6 +91,10 @@ int main(void)
         std::cout << std::setw(10) << "Pts Y: ";
         for (unsigned int i = 0; i < points.size(); ++i)
             std::cout << std::setw(6) << points[i][1] << ", ";
+        std::cout << std::endl;
+        std::cout << std::setw(10) << "Pts Z: ";
+        for (unsigned int i = 0; i < points.size(); ++i)
+            std::cout << std::setw(6) << points[i][2] << ", ";
         std::cout << std::endl;
     }
 

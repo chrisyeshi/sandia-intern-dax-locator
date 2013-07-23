@@ -11,75 +11,75 @@
 
 typedef dax::cont::internal::DeviceAdapterAlgorithm<DAX_DEFAULT_DEVICE_ADAPTER_TAG> Algorithm;
 
-    // temporary using a local struct to calculate the point count in each bucket
-    struct Offset2CountFunctor : dax::exec::internal::WorkletBase
+// temporary using a local struct to calculate the point count in each bucket
+struct Offset2CountFunctor : dax::exec::internal::WorkletBase
+{
+    ArrayHandle<dax::Id>::PortalConstExecution OffsetsPortal;
+    ArrayHandle<int>::PortalExecution CountsPortal;
+    dax::Id MaxId;
+    dax::Id OffsetEnd;
+
+    Offset2CountFunctor(
+        ArrayHandle<dax::Id>::PortalConstExecution offsetsPortal,
+        ArrayHandle<int>::PortalExecution countsPortal,
+        dax::Id maxId,
+        dax::Id offsetEnd)
+      : OffsetsPortal(offsetsPortal),
+        CountsPortal(countsPortal),
+        MaxId(maxId),
+        OffsetEnd(offsetEnd)
+    {}
+
+    DAX_EXEC_EXPORT
+    void operator()(dax::Id index) const
     {
-        ArrayHandle<dax::Id>::PortalConstExecution OffsetsPortal;
-        ArrayHandle<int>::PortalExecution CountsPortal;
-        dax::Id MaxId;
-        dax::Id OffsetEnd;
-
-        Offset2CountFunctor(
-            ArrayHandle<dax::Id>::PortalConstExecution offsetsPortal,
-            ArrayHandle<int>::PortalExecution countsPortal,
-            dax::Id maxId,
-            dax::Id offsetEnd)
-          : OffsetsPortal(offsetsPortal),
-            CountsPortal(countsPortal),
-            MaxId(maxId),
-            OffsetEnd(offsetEnd)
-        {}
-
-        DAX_EXEC_EXPORT
-        void operator()(dax::Id index) const
+      dax::Id thisOffset = this->OffsetsPortal.Get(index);
+      dax::Id nextOffset;
+      if (index == this->MaxId)
         {
-          dax::Id thisOffset = this->OffsetsPortal.Get(index);
-          dax::Id nextOffset;
-          if (index == this->MaxId)
-            {
-            nextOffset = this->OffsetEnd;
-            }
-          else
-            {
-            nextOffset = this->OffsetsPortal.Get(index+1);
-            }
-          this->CountsPortal.Set(index, nextOffset - thisOffset);
+        nextOffset = this->OffsetEnd;
         }
-    };
+      else
+        {
+        nextOffset = this->OffsetsPortal.Get(index+1);
+        }
+      this->CountsPortal.Set(index, nextOffset - thisOffset);
+    }
+};
 
-    // functor to translate from coarse representation to implicit representation
-    // of the grid ids
-    struct Coarse2ImplicitFunctor : dax::exec::internal::WorkletBase
+// functor to translate from coarse representation to implicit representation
+// of the grid ids
+struct Coarse2ImplicitFunctor : dax::exec::internal::WorkletBase
+{
+    ArrayHandle<dax::Id>::PortalConstExecution hUniqueBucketIds;
+    ArrayHandle<dax::Id>::PortalConstExecution hPointStartIds;
+    ArrayHandle<dax::Id>::PortalConstExecution hBucketPointCounts;
+    ArrayHandle<dax::Id>::PortalExecution hPointStarts;
+    ArrayHandle<int>::PortalExecution hPointCounts;
+
+    Coarse2ImplicitFunctor(
+        ArrayHandle<dax::Id>::PortalConstExecution hUniqueBucketIds_in,
+        ArrayHandle<dax::Id>::PortalConstExecution hPointStartIds_in,
+        ArrayHandle<dax::Id>::PortalConstExecution hBucketPointCounts_in,
+        ArrayHandle<dax::Id>::PortalExecution hPointStarts_in,
+        ArrayHandle<int>::PortalExecution hPointCounts_in)
+      : hUniqueBucketIds(hUniqueBucketIds_in),
+        hPointStartIds(hPointStartIds_in),
+        hBucketPointCounts(hBucketPointCounts_in),
+        hPointStarts(hPointStarts_in),
+        hPointCounts(hPointCounts_in)
+    {}
+
+    DAX_EXEC_EXPORT
+    void operator()(dax::Id index) const
     {
-        ArrayHandle<dax::Id>::PortalConstExecution hUniqueBucketIds;
-        ArrayHandle<dax::Id>::PortalConstExecution hPointStartIds;
-        ArrayHandle<dax::Id>::PortalConstExecution hBucketPointCounts;
-        ArrayHandle<dax::Id>::PortalExecution hPointStarts;
-        ArrayHandle<int>::PortalExecution hPointCounts;
-
-        Coarse2ImplicitFunctor(
-            ArrayHandle<dax::Id>::PortalConstExecution hUniqueBucketIds_in,
-            ArrayHandle<dax::Id>::PortalConstExecution hPointStartIds_in,
-            ArrayHandle<dax::Id>::PortalConstExecution hBucketPointCounts_in,
-            ArrayHandle<dax::Id>::PortalExecution hPointStarts_in,
-            ArrayHandle<int>::PortalExecution hPointCounts_in)
-          : hUniqueBucketIds(hUniqueBucketIds_in),
-            hPointStartIds(hPointStartIds_in),
-            hBucketPointCounts(hBucketPointCounts_in),
-            hPointStarts(hPointStarts_in),
-            hPointCounts(hPointCounts_in)
-        {}
-
-        DAX_EXEC_EXPORT
-        void operator()(dax::Id index) const
-        {
-            // get the bucket id from uniqueBucketIds
-            dax::Id bucketId = this->hUniqueBucketIds.Get(index);
-            // then use bucketId to index the output arrays 
-            this->hPointStarts.Set(bucketId, this->hPointStartIds.Get(index));
-            this->hPointCounts.Set(bucketId, this->hBucketPointCounts.Get(index));
-        }
-    };
+        // get the bucket id from uniqueBucketIds
+        dax::Id bucketId = this->hUniqueBucketIds.Get(index);
+        // then use bucketId to index the output arrays 
+        this->hPointStarts.Set(bucketId, this->hPointStartIds.Get(index));
+        this->hPointCounts.Set(bucketId, this->hBucketPointCounts.Get(index));
+    }
+};
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -104,18 +104,21 @@ DaxLocator::~DaxLocator()
 {
 }
 
-void DaxLocator::setSpacing(float x, float y)
+void DaxLocator::setSpacing(float x, float y, float z)
 {
-    this->grid.SetSpacing(dax::make_Vector3(x, y, 0.0));
+    this->grid.SetSpacing(dax::make_Vector3(x, y, z));
 }
 
-void DaxLocator::setExtent(int xmin, int xmax, int ymin, int ymax)
+void DaxLocator::setExtent(int xmin, int xmax,
+                           int ymin, int ymax,
+                           int zmin, int zmax)
 {
-    this->grid.SetOrigin(dax::make_Vector3(float(xmin), float(ymin), 0.0));
-    this->grid.SetExtent(dax::make_Id3(xmin, ymin, 0), dax::make_Id3(xmax, ymax, 1));
+    this->grid.SetOrigin(dax::make_Vector3(float(xmin), float(ymin), float(zmin)));
+    this->grid.SetExtent(dax::make_Id3(xmin, ymin, zmin),
+                         dax::make_Id3(xmax, ymax, zmax));
 }
 
-void DaxLocator::setPoints(const std::vector<dax::Vector2>& points)
+void DaxLocator::setPoints(const std::vector<dax::Vector3>& points)
 {
     this->hSortPoints = make_ArrayHandle(points);
 }
@@ -130,9 +133,9 @@ void DaxLocator::build()
     formatBucketIds(hBucketIds);
 }
 
-std::vector<dax::Vector2> DaxLocator::getSortPoints() const
+std::vector<dax::Vector3> DaxLocator::getSortPoints() const
 {
-    std::vector<dax::Vector2> sortPoints(hSortPoints.GetNumberOfValues());
+    std::vector<dax::Vector3> sortPoints(hSortPoints.GetNumberOfValues());
     hSortPoints.CopyInto(sortPoints.begin());
     return sortPoints;
 }
@@ -151,14 +154,14 @@ std::vector<int> DaxLocator::getPointCounts() const
     return pointCounts;
 }
 
-dax::Id DaxLocator::locatePoint(const dax::Vector2& point) const
+dax::Id DaxLocator::locatePoint(const dax::Vector3& point) const
 {
     // find the bucket id that the point belongs to
     dax::Id id = binPoint(point);
     return id;
 }
 
-std::vector<dax::Vector2> DaxLocator::getBucketPoints(const dax::Id& bucketId) const
+std::vector<dax::Vector3> DaxLocator::getBucketPoints(const dax::Id& bucketId) const
 {
     // variables
     std::vector<dax::Id> pointStarts = this->getPointStarts();
@@ -167,8 +170,8 @@ std::vector<dax::Vector2> DaxLocator::getBucketPoints(const dax::Id& bucketId) c
     dax::Id start = pointStarts[bucketId];
     int count = pointCounts[bucketId];
     // construct the return points array
-    std::vector<dax::Vector2> points(count);
-    std::vector<dax::Vector2> sortPoints = this->getSortPoints();
+    std::vector<dax::Vector3> points(count);
+    std::vector<dax::Vector3> sortPoints = this->getSortPoints();
     for (unsigned int i = 0; i < count; ++i)
         points[i] = sortPoints[i + start];
     return points;
@@ -270,14 +273,14 @@ void DaxLocator::formatBucketIds(ArrayHandle<dax::Id> hBucketIds)
     Algorithm::Schedule(coarse2Implicit, numUniqueKeys);
 }
 
-dax::Vector2 DaxLocator::origin() const
+dax::Vector3 DaxLocator::origin() const
 {
-    return dax::Vector2(grid.GetOrigin()[0], grid.GetOrigin()[1]);
+    return grid.GetOrigin();
 }
 
-dax::Vector2 DaxLocator::spacing() const
+dax::Vector3 DaxLocator::spacing() const
 {
-    return dax::Vector2(grid.GetSpacing()[0], grid.GetSpacing()[1]);
+    return grid.GetSpacing();
 }
 
 dax::Extent3 DaxLocator::extent() const
@@ -299,15 +302,19 @@ dax::Extent3 DaxLocator::extent() const
 //
 //////////////////////////////////////////////////////////////////////////////
 
-dax::Id DaxLocator::binPoint(const dax::Vector2& point) const
+dax::Id DaxLocator::binPoint(const dax::Vector3& point) const
 {
-    int resolution[2] = {extent().Max[0] - extent().Min[0],
-                         extent().Max[1] - extent().Min[0]};
+    int resolution[3] = {extent().Max[0] - extent().Min[0],
+                         extent().Max[1] - extent().Min[1],
+                         extent().Max[2] - extent().Min[2]};
     // compute the point coordinate within the grid
-    dax::Vector2 coord(point[0] - origin()[0], point[1] - origin()[1]);
+    dax::Vector3 coord(point[0] - origin()[0],
+                       point[1] - origin()[1],
+                       point[2] - origin()[2]);
     // which bucket the point belongs
-    dax::Id xid, yid;
+    dax::Id xid, yid, zid;
     xid = dax::math::Floor(coord[0] / spacing()[0]);
     yid = dax::math::Floor(coord[1] / spacing()[1]);
-    return xid + yid * resolution[0];
+    zid = dax::math::Floor(coord[2] / spacing()[2]);
+    return xid + yid * resolution[0] + zid * resolution[0] * resolution[2];
 }
