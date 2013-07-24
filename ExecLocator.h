@@ -141,6 +141,8 @@ protected:
         xid = dax::math::Floor(coord[0] / spacing[0]);
         yid = dax::math::Floor(coord[1] / spacing[1]);
         zid = dax::math::Floor(coord[2] / spacing[2]);
+        if (fabs(spacing[2]) < 0.0001)
+            zid = 0;
         return xid + yid * resolution[0] + zid * resolution[0] * resolution[2];
     }
 

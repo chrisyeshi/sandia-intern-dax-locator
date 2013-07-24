@@ -31,11 +31,11 @@ public:
                            point[1] - origin[1],
                            point[2] - origin[2]);
         // which bucket the point belongs
-        dax::Id xid, yid, zid;
-        xid = dax::math::Floor(coord[0] / spacing[0]);
-        yid = dax::math::Floor(coord[1] / spacing[1]);
-        zid = dax::math::Floor(coord[2] / spacing[2]);
-        return xid + yid * resolution[0] + zid * resolution[0] * resolution[2];
+        dax::Id id[3];
+        for (int i = 0; i < 3; ++i)
+            id[i] = fabs(spacing[i]) < 0.0001 ?
+                0 : dax::math::Floor(coord[i] / spacing[i]);
+        return id[0] + id[1] * resolution[0] + id[2] * resolution[0] * resolution[2];
     }
 };
 

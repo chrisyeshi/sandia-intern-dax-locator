@@ -10,8 +10,8 @@
 #include <dax/cont/arg/ExecutionObject.h>
 #include <dax/exec/WorkletMapField.h>
 
-#include "Point3D.h"
-#include "tests/RandomPoints3D.h"
+#include "Point2D.h"
+#include "tests/RandomPoints2D.h"
 #include "DaxLocator.h"
 #include "tests/unit_testing/Help.h"
 
@@ -21,26 +21,26 @@ using namespace dax::cont;
 int main(void)
 {
     // first generate a bunch of random points
-    RandomPoints3D random;
-    random.setExtent(0, 3, 0, 3, 0, 3);
+    RandomPoints2D random;
+    random.setExtent(0, 3, 0, 3);
     random.setPointCount(20);
     random.generate();
-    std::vector<Point3D> points = random.getPoints();
-    points.push_back(Point3D(0.99, 0.99, 0.99));
+    std::vector<Point2D> points = random.getPoints();
+    points.push_back(Point2D(0.99, 0.99));
 
-    // translate Point3D to dax::vector3
+    // translate Point2D to dax::vector3
     std::vector<dax::Vector3> daxPoints(points.size());
     for (unsigned int i = 0; i < points.size(); ++i)
     {
-        Point3D point = points[i];
-        dax::Vector3 daxvec(point.x(), point.y(), point.z());
+        Point2D point = points[i];
+        dax::Vector3 daxvec(point.x(), point.y(), 0.f);
         daxPoints[i] = daxvec;
     }
 
     // use DaxLocator class
     DaxLocator locator;
-    locator.setSpacing(1.0, 1.0, 1.0);
-    locator.setExtent(0, 3, 0, 3, 0, 3);
+    locator.setSpacing(1.0, 1.0, 0.0);
+    locator.setExtent(0, 3, 0, 3, 0, 1);
     locator.setPoints(daxPoints);
     locator.build();
 
@@ -63,7 +63,7 @@ int main(void)
     std::vector<dax::Vector3> testPoints = daxPoints;
     for (int i = 0; i < daxPoints.size() / 2; ++i)
         testPoints.pop_back();
-    testPoints.push_back(dax::make_Vector3(0.0, 0.0, 0.0));
+    testPoints.push_back(dax::make_Vector3(1.0, 0.0, 0.0));
     ArrayHandle<dax::Vector3> hTestPoints = make_ArrayHandle(testPoints);
     // 2. create output array handles
     ArrayHandle<dax::Id> hTestBucketIds;
@@ -84,7 +84,7 @@ int main(void)
     help::printCoinPoints(testPoints, testBucketIds, testCounts, testCoinPoints, ss);
 
     // compare to the correct output
-    help::printCompare(ss.str(), "execlocate_correct_output.txt");
+    help::printCompare(ss.str(), "execlocate_2d_correct_output.txt");
 
     return 0;
 }

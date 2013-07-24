@@ -7,35 +7,35 @@
 
 #include <dax/Types.h>
 
-#include "Point3D.h"
-#include "tests/RandomPoints3D.h"
+#include "Point2D.h"
+#include "tests/RandomPoints2D.h"
 #include "DaxLocator.h"
 #include "tests/unit_testing/Help.h"
 
 // main
 int main(void)
 {
-    // first generate a bunch of random points
-    RandomPoints3D random;
-    random.setExtent(0, 3, 0, 3, 0, 3);
+    // first generate a bunch of random 2d points
+    RandomPoints2D random;
+    random.setExtent(0, 3, 0, 3);
     random.setPointCount(20);
     random.generate();
-    std::vector<Point3D> points = random.getPoints();
-    points.push_back(Point3D(0.99, 0.99, 0.99));
+    std::vector<Point2D> points = random.getPoints();
+    points.push_back(Point2D(1.99, 1.99));
 
-    // translate Point3D to dax::vector3
+    // translate Point2D to dax::vector3
     std::vector<dax::Vector3> daxPoints(points.size());
     for (unsigned int i = 0; i < points.size(); ++i)
     {
-        Point3D point = points[i];
-        dax::Vector3 daxvec(point.x(), point.y(), point.z());
-        daxPoints[i] = daxvec;
+        Point2D point = points[i];
+        dax::Vector3 daxPoint(point.x(), point.y(), 0.0);
+        daxPoints[i] = daxPoint;
     }
 
     // use DaxLocator class
     DaxLocator locator;
-    locator.setSpacing(1.0, 1.0, 1.0);
-    locator.setExtent(0, 3, 0, 3, 0, 3);
+    locator.setSpacing(1.0, 1.0, 0.0);
+    locator.setExtent(0, 3, 0, 3, 0, 1);
     locator.setPoints(daxPoints);
     locator.build();
 
@@ -50,10 +50,10 @@ int main(void)
     help::printStartCount(pointStarts, pointCounts, ss);
 
     // binning a point 
-    help::printBinPoint(1.f, 1.f, 1.f, locator, ss);
-
-    // compare the output and the correct output 
-    help::printCompare(ss.str(), "daxlocator_correct_output.txt");
+    help::printBinPoint(1.f, 1.f, 0.f, locator, ss);
+ 
+    // compare output to the correct output file
+    help::printCompare(ss.str(), "daxlocate_2d_correct_output.txt");
 
     return 0;
 }
