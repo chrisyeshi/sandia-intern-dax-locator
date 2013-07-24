@@ -23,6 +23,15 @@ public:
                        const dax::Vector3& spacing,
                        const dax::Extent3& extent) const
     {
+        return bin(point, origin, spacing, extent);
+    }
+
+    DAX_EXEC_CONT_EXPORT
+    dax::Id bin(const dax::Vector3& point,
+                const dax::Vector3& origin,
+                const dax::Vector3& spacing,
+                const dax::Extent3& extent) const
+    {
         int resolution[3] = {extent.Max[0] - extent.Min[0],
                              extent.Max[1] - extent.Min[1],
                              extent.Max[2] - extent.Min[2]};

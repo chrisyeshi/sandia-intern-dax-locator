@@ -45,14 +45,13 @@ protected:
     ArrayHandle<dax::Id> mapPoints2Bin();
     ArrayHandle<dax::Id> sortPoints(ArrayHandle<dax::Id> hOriBucketIds);
     void formatBucketIds(ArrayHandle<dax::Id> hBucketIds);
+    dax::Id binPoint(const dax::Vector3& point) const;
 
     dax::Vector3 origin() const;
     dax::Vector3 spacing() const;
     dax::Extent3 extent() const;
 
 private:
-    // CPU version of mapping a single point into a bin
-    dax::Id binPoint(const dax::Vector3& point) const;
 };
 
 #endif //__DAXLOCATOR_H__

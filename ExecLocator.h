@@ -7,6 +7,8 @@
 #include <dax/math/Precision.h>
 #include <dax/cont/ArrayHandle.h>
 
+#include "BinPoints.h"
+
 using namespace dax::cont;
 
 class ExecLocator : public dax::exec::ExecutionObjectBase
@@ -125,25 +127,10 @@ protected:
         return true;
     }
 
-    // TODO: refactor is to BinPoints.h
-    DAX_EXEC_CONT_EXPORT
+    DAX_EXEC_EXPORT
     dax::Id binPoint(const dax::Vector3& point) const
     {
-        int resolution[3] = {extent.Max[0] - extent.Min[0],
-                             extent.Max[1] - extent.Min[1],
-                             extent.Max[2] - extent.Min[2]};
-        // compute the point coordinate within the grid
-        dax::Vector3 coord(point[0] - origin[0],
-                           point[1] - origin[1],
-                           point[2] - origin[2]);
-        // which bucket the point belongs
-        dax::Id xid, yid, zid;
-        xid = dax::math::Floor(coord[0] / spacing[0]);
-        yid = dax::math::Floor(coord[1] / spacing[1]);
-        zid = dax::math::Floor(coord[2] / spacing[2]);
-        if (fabs(spacing[2]) < 0.0001)
-            zid = 0;
-        return xid + yid * resolution[0] + zid * resolution[0] * resolution[2];
+        return dax::worklet::BinPoints().bin(point, origin, spacing, extent);
     }
 
 private:
