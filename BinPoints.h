@@ -32,9 +32,10 @@ public:
                 const dax::Vector3& spacing,
                 const dax::Extent3& extent) const
     {
-        int resolution[3] = {extent.Max[0] - extent.Min[0],
-                             extent.Max[1] - extent.Min[1],
-                             extent.Max[2] - extent.Min[2]};
+        dax::Id3 dimensions = extentCellDimensions(extent);
+        dax::Id3 divs(dax::Scalar(dimensions[0]) / spacing[0] + 0.5,
+                      dax::Scalar(dimensions[1]) / spacing[1] + 0.5,
+                      dax::Scalar(dimensions[2]) / spacing[2] + 0.5);
         // compute the point coordinate within the grid
         dax::Vector3 coord(point[0] - origin[0],
                            point[1] - origin[1],
@@ -44,7 +45,7 @@ public:
         for (int i = 0; i < 3; ++i)
             id[i] = fabs(spacing[i]) < 0.0001 ?
                 0 : dax::math::Floor(coord[i] / spacing[i]);
-        return id[0] + id[1] * resolution[0] + id[2] * resolution[0] * resolution[2];
+        return id[0] + id[1] * divs[0] + id[2] * divs[0] * divs[2];
     }
 };
 

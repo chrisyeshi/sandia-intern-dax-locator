@@ -19,13 +19,18 @@ public:
     DaxLocator();
     virtual ~DaxLocator();
 
-    void setPointsPerBucket(int ppb) { pointsPerBucket = ppb; }
     void setAutomatic(bool automatic) { this->automatic = automatic; }
+    void setPointsPerBucket(int ppb) { pointsPerBucket = ppb; }
     void setDivisions(int x, int y, int z);
     void setExtent(int xmin, int xmax, int ymin, int ymax, int zmin, int zmax);
     void setPoints(const std::vector<dax::Vector3>& points);
     void build();
 
+    // smart getter function that only becomes valid
+    // after you setPoints,
+    // it returns the number of cells per dimension depending on
+    // whether it's automatic mode or manual mode
+    dax::Id3 getDivs() const { return divs(); }
     std::vector<dax::Vector3> getSortPoints() const;
     std::vector<dax::Id> getPointStarts() const;
     std::vector<int> getPointCounts() const;
@@ -64,6 +69,7 @@ protected:
     dax::Vector3 origin() const;
     dax::Vector3 spacing() const;
     dax::Extent3 extent() const;
+    dax::Id3 divs() const;
     int numberOfCells() const;
 
 private:

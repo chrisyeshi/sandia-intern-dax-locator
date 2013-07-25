@@ -214,6 +214,7 @@ ArrayHandle<dax::Id> DaxLocator::mapPoints2Bin()
                      spacing(),
                      extent(),
                      hOriBucketIds);
+
     return hOriBucketIds;
 }
 
@@ -289,9 +290,9 @@ dax::Vector3 DaxLocator::spacing() const
     // 0 3 0 3 0 3 and 3 3 3 ==> 1 1 1
     dax::Id3 dims = dax::extentCellDimensions(extent());
     // 3 3 3
-    dax::Vector3 spacing(dax::Scalar(dims[0]) / dax::Scalar(this->divisions[0]),
-                         dax::Scalar(dims[1]) / dax::Scalar(this->divisions[1]),
-                         dax::Scalar(dims[2]) / dax::Scalar(this->divisions[2]));
+    dax::Vector3 spacing(dax::Scalar(dims[0]) / dax::Scalar(this->divs()[0]),
+                         dax::Scalar(dims[1]) / dax::Scalar(this->divs()[1]),
+                         dax::Scalar(dims[2]) / dax::Scalar(this->divs()[2]));
     // 1 1 1
     return spacing;
 }
@@ -301,9 +302,22 @@ dax::Extent3 DaxLocator::extent() const
     return this->Extent;
 }
 
+dax::Id3 DaxLocator::divs() const
+{
+    // if automatic, calculate divisions base on pointsPerBucket
+    if (this->automatic)
+    {
+        // equation: div.x = pow(N/pointsPerBucket, 1/3)
+        dax::Id level = pow(hSortPoints.GetNumberOfValues() / 3, 1.f/3.f) + 0.5;
+        return dax::Id3(level, level, level);
+    }
+    // if manual, use user specified divisions
+    return this->divisions;
+}
+
 int DaxLocator::numberOfCells() const
 {
-    return divisions[0] * divisions[1] * divisions[2];
+    return divs()[0] * divs()[1] * divs()[2];
 }
 
 //////////////////////////////////////////////////////////////////////////////

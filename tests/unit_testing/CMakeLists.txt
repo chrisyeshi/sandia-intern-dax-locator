@@ -89,3 +89,7 @@ cuda_add_executable(execlocate_2d_test_cuda ${CMAKE_CURRENT_BINARY_DIR}/execloca
 
 add_test(execlocate_2d_test_serial command ./execlocate_2d_test_serial)
 add_test(execlocate_2d_test_cuda command ./execlocate_2d_test_cuda)
+
+# divisions test
+add_executable(divisions_test ./divs_test.cxx ../../DaxLocator.cxx ../../ExecLocator.cxx)
+add_test(divisions_test command ./divisions_test)

@@ -34,6 +34,7 @@ int main(void)
 
     // use DaxLocator class
     DaxLocator locator;
+    locator.setAutomatic(false);
     locator.setDivisions(3, 3, 1);
     locator.setExtent(0, 3, 0, 3, 0, 0);
     locator.setPoints(daxPoints);
