@@ -34,9 +34,9 @@ public:
     dax::Id getBucketId(const dax::Vector3& point) const
     {
         // make sure the point is within extent
-        if (point[0] < extent.Min[0] || point[0] >= extent.Max[0]
-         || point[1] < extent.Min[1] || point[1] >= extent.Max[1]
-         || point[2] < extent.Min[2] || point[2] >= extent.Max[2])
+        if (point[0] < extent.Min[0] || point[0] > extent.Max[0]
+         || point[1] < extent.Min[1] || point[1] > extent.Max[1]
+         || point[2] < extent.Min[2] || point[2] > extent.Max[2])
             return -1;
         // use the helper function from Binpoints.h to find the bucket id
         return binPoint(point);

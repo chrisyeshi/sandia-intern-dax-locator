@@ -19,7 +19,9 @@ public:
     DaxLocator();
     virtual ~DaxLocator();
 
-    void setSpacing(float x, float y, float z);
+    void setPointsPerBucket(int ppb) { pointsPerBucket = ppb; }
+    void setAutomatic(bool automatic) { this->automatic = automatic; }
+    void setDivisions(int x, int y, int z);
     void setExtent(int xmin, int xmax, int ymin, int ymax, int zmin, int zmax);
     void setPoints(const std::vector<dax::Vector3>& points);
     void build();
@@ -32,7 +34,19 @@ public:
     ExecLocator prepareExecutionObject() const;
 
 protected:
-    UniformGrid<> grid;
+    // when automatic is true,
+    // grid resolution is calculated automatically,
+    // when false, user needs to specify the grid spacing
+    // default to be true
+    bool automatic;
+
+    // average points per bucket,
+    // used to compute the grid resolution in automatic mode.
+    // defaut to be 3
+    int pointsPerBucket;
+
+    dax::Id3 divisions;
+    dax::Extent3 Extent;
     ArrayHandle<dax::Id> hOriBucketIds;
     ArrayHandle<dax::Id> hBucketIds;
     ArrayHandle<dax::Vector3> hSortPoints;
@@ -50,6 +64,7 @@ protected:
     dax::Vector3 origin() const;
     dax::Vector3 spacing() const;
     dax::Extent3 extent() const;
+    int numberOfCells() const;
 
 private:
 };

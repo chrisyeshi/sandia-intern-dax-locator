@@ -31,7 +31,7 @@ int main(void)
 
     // use DaxLocator class
     DaxLocator locator;
-    locator.setSpacing(1.0, 1.0, 1.0);
+    locator.setDivisions(3, 3, 3);
     locator.setExtent(0, 3, 0, 3, 0, 3);
     locator.setPoints(daxPoints);
     locator.build();
