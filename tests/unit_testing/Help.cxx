@@ -2,7 +2,7 @@
 
 #include <fstream>
 
-#include "DaxLocator.h"
+#include "PointLocator.h"
 
 namespace help
 {
@@ -22,7 +22,7 @@ void printStartCount(const std::vector<dax::Id>& pointStarts,
 }
 
 void printBinPoint(float x, float y, float z,
-                   const DaxLocator& locator,
+                   const PointLocator& locator,
                    std::iostream& stream)
 {
     stream << std::setw(10) << "X: " << x << std::endl;

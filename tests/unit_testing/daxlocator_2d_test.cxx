@@ -9,7 +9,7 @@
 
 #include "Point2D.h"
 #include "tests/RandomPoints2D.h"
-#include "DaxLocator.h"
+#include "PointLocator.h"
 #include "tests/unit_testing/Help.h"
 
 // main
@@ -32,8 +32,8 @@ int main(void)
         daxPoints[i] = daxPoint;
     }
 
-    // use DaxLocator class
-    DaxLocator locator;
+    // use PointLocator class
+    PointLocator locator;
     locator.setAutomatic(false);
     locator.setDivisions(3, 3, 1);
     locator.setExtent(0, 3, 0, 3, 0, 0);

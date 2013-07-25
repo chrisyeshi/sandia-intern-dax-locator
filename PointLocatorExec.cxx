@@ -1,6 +1,6 @@
 #define BOOST_SP_DISABLE_THREADS
 
-#include "ExecLocator.h"
+#include "PointLocatorExec.h"
 
 ///////////////////////////////////////////////////////////////////////
 //
@@ -14,11 +14,11 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-ExecLocator::ExecLocator()
+PointLocatorExec::PointLocatorExec()
 {
 }
 
-ExecLocator::ExecLocator(const dax::Vector3& origin,
+PointLocatorExec::PointLocatorExec(const dax::Vector3& origin,
                          const dax::Vector3& spacing,
                          const dax::Extent3& extent,
                          ArrayHandle<dax::Vector3>::PortalConstExecution sortPoints,
@@ -33,32 +33,35 @@ ExecLocator::ExecLocator(const dax::Vector3& origin,
 {
 }
 
-void ExecLocator::setOrigin(const dax::Vector3& origin)
+void PointLocatorExec::setOrigin(const dax::Vector3& origin)
 {
     this->origin = origin;
 }
 
-void ExecLocator::setSpacing(const dax::Vector3& spacing)
+void PointLocatorExec::setSpacing(const dax::Vector3& spacing)
 {
     this->spacing = spacing;
 }
 
-void ExecLocator::setExtent(const dax::Extent3& extent)
+void PointLocatorExec::setExtent(const dax::Extent3& extent)
 {
     this->extent = extent;
 }
 
-void ExecLocator::setSortPoints(ArrayHandle<dax::Vector3>::PortalConstExecution sortPoints)
+void PointLocatorExec::setSortPoints
+    (ArrayHandle<dax::Vector3>::PortalConstExecution sortPoints)
 {
     this->sortPoints = sortPoints;
 }
 
-void ExecLocator::setPointStarts(ArrayHandle<dax::Id>::PortalConstExecution pointStarts)
+void PointLocatorExec::setPointStarts
+    (ArrayHandle<dax::Id>::PortalConstExecution pointStarts)
 {
     this->pointStarts = pointStarts;
 }
 
-void ExecLocator::setPointCounts(ArrayHandle<int>::PortalConstExecution pointCounts)
+void PointLocatorExec::setPointCounts
+    (ArrayHandle<int>::PortalConstExecution pointCounts)
 {
     this->pointCounts = pointCounts;
 }

@@ -7,7 +7,7 @@
 
 #include "Point3D.h"
 #include "tests/RandomPoints3D.h"
-#include "DaxLocator.h"
+#include "PointLocator.h"
 
 // main
 int main(void)
@@ -29,8 +29,8 @@ int main(void)
         daxPoints[i] = daxvec;
     }
 
-    // use DaxLocator class
-    DaxLocator locator;
+    // use PointLocator class
+    PointLocator locator;
     locator.setDivisions(3, 3, 3);
     locator.setExtent(0, 3, 0, 3, 0, 3);
     locator.setPoints(daxPoints);

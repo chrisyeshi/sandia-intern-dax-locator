@@ -11,8 +11,8 @@
 
 #include "Point3D.h"
 #include "tests/RandomPoints3D.h"
-#include "DaxLocator.h"
-#include "ExecLocator.h"
+#include "PointLocator.h"
+#include "PointLocatorExec.h"
 
 using namespace dax::cont;
 
@@ -67,8 +67,8 @@ int main(void)
     Timer<> timer;
     timer.Reset();
 
-    // use DaxLocator class
-    DaxLocator locator;
+    // use PointLocator class
+    PointLocator locator;
     locator.setDivisions(3, 3, 3);
     locator.setExtent(0, 3, 0, 3, 0, 3);
     locator.setPoints(daxPoints);
@@ -107,10 +107,10 @@ int main(void)
         std::cout << std::setw(3) << pointCounts[i] << ", ";
     std::cout << std::endl;
 
-    // setup the ExecLocator, which is a ExecutionObject
-    ExecLocator execLocator = locator.prepareExecutionObject();
+    // setup the PointLocatorExec, which is a ExecutionObject
+    PointLocatorExec execLocator = locator.prepareExecutionObject();
 
-    // use the local TestWorklet to test the ExecLocator
+    // use the local TestWorklet to test the PointLocatorExec
     // 1. create test inputs, which are points
     std::vector<dax::Vector3> testPoints(19);
     for (int i = 0; i < 19; ++i)

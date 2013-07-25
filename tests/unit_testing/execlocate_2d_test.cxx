@@ -12,7 +12,7 @@
 
 #include "Point2D.h"
 #include "tests/RandomPoints2D.h"
-#include "DaxLocator.h"
+#include "PointLocator.h"
 #include "tests/unit_testing/Help.h"
 
 using namespace dax::cont;
@@ -37,8 +37,8 @@ int main(void)
         daxPoints[i] = daxvec;
     }
 
-    // use DaxLocator class
-    DaxLocator locator;
+    // use PointLocator class
+    PointLocator locator;
     locator.setAutomatic(false);
     locator.setDivisions(3, 3, 1);
     locator.setExtent(0, 3, 0, 3, 0, 0);
@@ -56,10 +56,10 @@ int main(void)
     ss << std::fixed;
     help::printStartCount(pointStarts, pointCounts, ss);
 
-    // setup the ExecLocator, which is a ExecutionObject
-    ExecLocator execLocator = locator.prepareExecutionObject();
+    // setup the PointLocatorExec, which is a ExecutionObject
+    PointLocatorExec execLocator = locator.prepareExecutionObject();
 
-    // use the FindPointsWorklet to test the ExecLocator
+    // use the FindPointsWorklet to test the PointLocatorExec
     // 1. create test inputs, which are points
     std::vector<dax::Vector3> testPoints = daxPoints;
     for (int i = 0; i < daxPoints.size() / 2; ++i)

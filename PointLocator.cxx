@@ -1,6 +1,6 @@
 #define BOOST_SP_DISABLE_THREADS
 
-#include "DaxLocator.h"
+#include "PointLocator.h"
 
 #include <iostream>
 #include <iomanip>
@@ -96,20 +96,20 @@ struct Coarse2ImplicitFunctor : dax::exec::internal::WorkletBase
 //
 //////////////////////////////////////////////////////////////////////////////
 
-DaxLocator::DaxLocator() : automatic(true), pointsPerBucket(3)
+PointLocator::PointLocator() : automatic(true), pointsPerBucket(3)
 {
 }
 
-DaxLocator::~DaxLocator()
+PointLocator::~PointLocator()
 {
 }
 
-void DaxLocator::setDivisions(int x, int y, int z)
+void PointLocator::setDivisions(int x, int y, int z)
 {
     this->divisions = dax::make_Id3(x, y, z);
 }
 
-void DaxLocator::setExtent(int xmin, int xmax,
+void PointLocator::setExtent(int xmin, int xmax,
                            int ymin, int ymax,
                            int zmin, int zmax)
 {
@@ -117,12 +117,12 @@ void DaxLocator::setExtent(int xmin, int xmax,
     this->Extent.Max = dax::make_Id3(xmax, ymax, zmax);
 }
 
-void DaxLocator::setPoints(const std::vector<dax::Vector3>& points)
+void PointLocator::setPoints(const std::vector<dax::Vector3>& points)
 {
     this->hSortPoints = make_ArrayHandle(points);
 }
 
-void DaxLocator::build()
+void PointLocator::build()
 {
     // Step 1: map points to bin
     ArrayHandle<dax::Id> hOriBucketIds = mapPoints2Bin();
@@ -132,35 +132,35 @@ void DaxLocator::build()
     formatBucketIds(hBucketIds);
 }
 
-std::vector<dax::Vector3> DaxLocator::getSortPoints() const
+std::vector<dax::Vector3> PointLocator::getSortPoints() const
 {
     std::vector<dax::Vector3> sortPoints(hSortPoints.GetNumberOfValues());
     hSortPoints.CopyInto(sortPoints.begin());
     return sortPoints;
 }
 
-std::vector<dax::Id> DaxLocator::getPointStarts() const
+std::vector<dax::Id> PointLocator::getPointStarts() const
 {
     std::vector<dax::Id> pointStarts(hPointStarts.GetNumberOfValues());
     hPointStarts.CopyInto(pointStarts.begin());
     return pointStarts;
 }
 
-std::vector<int> DaxLocator::getPointCounts() const
+std::vector<int> PointLocator::getPointCounts() const
 {
     std::vector<int> pointCounts(hPointCounts.GetNumberOfValues());
     hPointCounts.CopyInto(pointCounts.begin());
     return pointCounts;
 }
 
-dax::Id DaxLocator::locatePoint(const dax::Vector3& point) const
+dax::Id PointLocator::locatePoint(const dax::Vector3& point) const
 {
     // find the bucket id that the point belongs to
     dax::Id id = binPoint(point);
     return id;
 }
 
-std::vector<dax::Vector3> DaxLocator::getBucketPoints(const dax::Id& bucketId) const
+std::vector<dax::Vector3> PointLocator::getBucketPoints(const dax::Id& bucketId) const
 {
     // variables
     std::vector<dax::Id> pointStarts = this->getPointStarts();
@@ -176,9 +176,9 @@ std::vector<dax::Vector3> DaxLocator::getBucketPoints(const dax::Id& bucketId) c
     return points;
 }
 
-ExecLocator DaxLocator::prepareExecutionObject() const
+PointLocatorExec PointLocator::prepareExecutionObject() const
 {
-    ExecLocator ret;
+    PointLocatorExec ret;
     ret.setOrigin(origin());
     ret.setSpacing(spacing());
     ret.setExtent(extent());
@@ -202,7 +202,7 @@ ExecLocator DaxLocator::prepareExecutionObject() const
 //
 //////////////////////////////////////////////////////////////////////////////
 
-ArrayHandle<dax::Id> DaxLocator::mapPoints2Bin()
+ArrayHandle<dax::Id> PointLocator::mapPoints2Bin()
 {
     // use a worklet to find out which bin each point belongs to
     // results are stored in this->hOriBucketIds
@@ -218,7 +218,7 @@ ArrayHandle<dax::Id> DaxLocator::mapPoints2Bin()
     return hOriBucketIds;
 }
 
-ArrayHandle<dax::Id> DaxLocator::sortPoints(ArrayHandle<dax::Id> hOriBucketIds)
+ArrayHandle<dax::Id> PointLocator::sortPoints(ArrayHandle<dax::Id> hOriBucketIds)
 {
     // sort the point array according to the bucketIds array
     // use the sorting functions provided by dax
@@ -231,7 +231,7 @@ ArrayHandle<dax::Id> DaxLocator::sortPoints(ArrayHandle<dax::Id> hOriBucketIds)
     return hBucketIds;
 }
 
-void DaxLocator::formatBucketIds(ArrayHandle<dax::Id> hBucketIds)
+void PointLocator::formatBucketIds(ArrayHandle<dax::Id> hBucketIds)
 {
     // use the unique operator to find out the unique bucket ids that have points
     ArrayHandle<dax::Id> hUniqueBucketIds;
@@ -273,19 +273,19 @@ void DaxLocator::formatBucketIds(ArrayHandle<dax::Id> hBucketIds)
     Algorithm::Schedule(coarse2Implicit, numUniqueKeys);
 }
 
-dax::Id DaxLocator::binPoint(const dax::Vector3& point) const
+dax::Id PointLocator::binPoint(const dax::Vector3& point) const
 {
     return dax::worklet::BinPoints().bin(point, origin(), spacing(), extent());
 }
 
-dax::Vector3 DaxLocator::origin() const
+dax::Vector3 PointLocator::origin() const
 {
     return dax::make_Vector3(extent().Min[0],
                              extent().Min[1],
                              extent().Min[2]);
 }
 
-dax::Vector3 DaxLocator::spacing() const
+dax::Vector3 PointLocator::spacing() const
 {
     // 0 3 0 3 0 3 and 3 3 3 ==> 1 1 1
     dax::Id3 dims = dax::extentCellDimensions(extent());
@@ -297,12 +297,12 @@ dax::Vector3 DaxLocator::spacing() const
     return spacing;
 }
 
-dax::Extent3 DaxLocator::extent() const
+dax::Extent3 PointLocator::extent() const
 {
     return this->Extent;
 }
 
-dax::Id3 DaxLocator::divs() const
+dax::Id3 PointLocator::divs() const
 {
     // if automatic, calculate divisions base on pointsPerBucket
     if (this->automatic)
@@ -315,7 +315,7 @@ dax::Id3 DaxLocator::divs() const
     return this->divisions;
 }
 
-int DaxLocator::numberOfCells() const
+int PointLocator::numberOfCells() const
 {
     return divs()[0] * divs()[1] * divs()[2];
 }

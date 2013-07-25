@@ -9,7 +9,7 @@
 #include <dax/Types.h>
 #include <dax/exec/WorkletMapField.h>
 
-class DaxLocator;
+class PointLocator;
 
 namespace help
 {
@@ -19,7 +19,7 @@ void printStartCount(const std::vector<dax::Id>& pointStarts,
                      std::iostream& stream);
 
 void printBinPoint(float x, float y, float z,
-                   const DaxLocator& locator,
+                   const PointLocator& locator,
                    std::iostream& stream);
 
 void printCompare(const std::string& output, const std::string& filename);

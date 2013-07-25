@@ -11,16 +11,16 @@
 
 using namespace dax::cont;
 
-class ExecLocator : public dax::exec::ExecutionObjectBase
+class PointLocatorExec : public dax::exec::ExecutionObjectBase
 {
 public:
-    ExecLocator();
-    ExecLocator(const dax::Vector3& origin,
-                const dax::Vector3& spacing,
-                const dax::Extent3& extent,
-                ArrayHandle<dax::Vector3>::PortalConstExecution sortPoints,
-                ArrayHandle<dax::Id>::PortalConstExecution pointStarts,
-                ArrayHandle<int>::PortalConstExecution pointCounts);
+    PointLocatorExec();
+    PointLocatorExec(const dax::Vector3& origin,
+                     const dax::Vector3& spacing,
+                     const dax::Extent3& extent,
+                     ArrayHandle<dax::Vector3>::PortalConstExecution sortPoints,
+                     ArrayHandle<dax::Id>::PortalConstExecution pointStarts,
+                     ArrayHandle<int>::PortalConstExecution pointCounts);
 
     void setOrigin(const dax::Vector3& origin);
     void setSpacing(const dax::Vector3& spacing);

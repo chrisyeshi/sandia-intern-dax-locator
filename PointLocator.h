@@ -1,5 +1,5 @@
-#ifndef __DAXLOCATOR_H__
-#define __DAXLOCATOR_H__
+#ifndef __POINTLOCATOR_H__
+#define __POINTLOCATOR_H__
 
 #include <dax/Types.h>
 #include <dax/cont/UniformGrid.h>
@@ -9,15 +9,15 @@
 #include <dax/cont/internal/DeviceAdapterAlgorithm.h>
 #include <dax/exec/WorkletMapField.h>
 
-#include "ExecLocator.h"
+#include "PointLocatorExec.h"
 
 using namespace dax::cont;
 
-class DaxLocator
+class PointLocator
 {
 public:
-    DaxLocator();
-    virtual ~DaxLocator();
+    PointLocator();
+    virtual ~PointLocator();
 
     void setAutomatic(bool automatic) { this->automatic = automatic; }
     void setPointsPerBucket(int ppb) { pointsPerBucket = ppb; }
@@ -36,7 +36,7 @@ public:
     std::vector<int> getPointCounts() const;
     dax::Id locatePoint(const dax::Vector3& point) const;
     std::vector<dax::Vector3> getBucketPoints(const dax::Id& bucketId) const;
-    ExecLocator prepareExecutionObject() const;
+    PointLocatorExec prepareExecutionObject() const;
 
 protected:
     // when automatic is true,
@@ -75,4 +75,4 @@ protected:
 private:
 };
 
-#endif //__DAXLOCATOR_H__
+#endif //__POINTLOCATOR_H__
