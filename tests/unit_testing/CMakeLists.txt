@@ -93,3 +93,9 @@ add_test(pointlocateexec_2d_test_cuda command ./execlocate_2d_test_cuda)
 # divisions test
 add_executable(divisions_test ./divs_test.cxx ../../PointLocator.cxx ../../PointLocatorExec.cxx)
 add_test(divisions_test command ./divisions_test)
+
+# triangle mesh 2d test
+file(COPY ./triangle_mesh_2d_correct_output.txt DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+add_executable(triangle_mesh_2d_test ./trianglemesh_2d_test.cxx ../TriangleMesh2DGenerator.cxx ../../Point2D.cxx Help.cxx ../../PointLocator.cxx ../../PointLocatorExec.cxx)
+add_test(triangle_mesh_2d_test command ./triangle_mesh_2d_test)
