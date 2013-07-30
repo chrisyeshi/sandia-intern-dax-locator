@@ -10,7 +10,8 @@ TriangleMesh2DGenerator::~TriangleMesh2DGenerator()
 {
 }
 
-void TriangleMesh2DGenerator::setExtent(int xmin, int xmax, int ymin, int ymax)
+void TriangleMesh2DGenerator::setExtent(float xmin, float xmax,
+                                        float ymin, float ymax)
 {
     extent[0] = xmin;
     extent[1] = xmax;
@@ -62,6 +63,30 @@ void TriangleMesh2DGenerator::generate()
             connections[quadStart + 4] = ptId01;
             connections[quadStart + 5] = ptId00;
         }
+}
+
+std::vector<dax::Vector2> TriangleMesh2DGenerator::getDaxPoints() const
+{
+    // translate Point2D into dax::Vector2
+    std::vector<dax::Vector2> daxPoints(points.size());
+    for (unsigned int i = 0; i < points.size(); ++i)
+    {
+        Point2D point = points[i];
+        daxPoints[i] = dax::make_Vector2(point.x(), point.y());
+    }
+    return daxPoints;
+}
+
+std::vector<dax::Id> TriangleMesh2DGenerator::getDaxConnections() const
+{
+    // translate int into dax::Id
+    std::vector<dax::Id> daxConnections(connections.size());
+    for (unsigned int i = 0; i < connections.size(); ++i)
+    {
+        int id = connections[i];
+        daxConnections[i] = id;
+    }
+    return daxConnections;
 }
 
 // number of points in each direction

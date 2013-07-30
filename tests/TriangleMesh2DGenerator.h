@@ -1,5 +1,7 @@
 #include <iostream>
 
+#include <dax/Types.h>
+
 #include "Point2D.h"
 
 class TriangleMesh2DGenerator
@@ -8,13 +10,17 @@ public:
     TriangleMesh2DGenerator();
     virtual ~TriangleMesh2DGenerator();
 
-    void setExtent(int xmin, int xmax, int ymin, int ymax);
+    void setExtent(float xmin, float xmax, float ymin, float ymax);
     void setDivisions(int x, int y);
 
     void generate();
 
+    // output
     std::vector<Point2D> getPoints() const { return points; }
     std::vector<int> getConnections() const { return connections; }
+    // output in the dax format
+    std::vector<dax::Vector2> getDaxPoints() const;
+    std::vector<dax::Id> getDaxConnections() const;
 
 protected:
     // points are the vertices of the mesh
@@ -34,7 +40,7 @@ protected:
     std::vector<Point2D> points;
     std::vector<int> connections;
 
-    std::vector<int> extent;
+    std::vector<float> extent;
     std::vector<int> divisions;
 
     // number of points in each direction

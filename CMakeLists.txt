@@ -23,6 +23,7 @@ include_directories(${Uniform_SOURCE_DIR})
 add_executable(locate ./locate.cxx ./tests/RandomPoints2D.cxx ./Point2D.cxx)
 add_executable(pointlocate_serial ./pointlocate.cxx ./tests/RandomPoints3D.cxx ./Point3D.cxx ./Point2D.cxx ./PointLocator.cxx ./PointLocatorExec.cxx)
 add_executable(pointlocateexec_serial ./pointlocateexec.cxx ./tests/RandomPoints3D.cxx ./Point3D.cxx ./Point2D.cxx ./PointLocator.cxx ./PointLocatorExec.cxx)
+add_executable(trilocate_serial ./trilocate.cxx ./tests/TriangleMesh2DGenerator.cxx ./Point2D.cxx)
 
 # cuda executables
 if (BUILD_CUDA)
@@ -33,6 +34,7 @@ if (BUILD_CUDA)
     configure_file(PointLocator.cxx ${CMAKE_CURRENT_BINARY_DIR}/PointLocator.cu COPYONLY)
     configure_file(PointLocatorExec.cxx ${CMAKE_CURRENT_BINARY_DIR}/PointLocatorExec.cu COPYONLY)
     configure_file(pointlocateexec.cxx ${CMAKE_CURRENT_BINARY_DIR}/pointlocateexec.cu COPYONLY)
+    configure_file(trilocate.cxx ${CMAKE_CURRENT_BINARY_DIR}/trilocate.cu COPYONLY)
 
     cuda_add_executable(pointlocate_cuda ${CMAKE_CURRENT_BINARY_DIR}/pointlocate.cu
                                        ./tests/RandomPoints3D.cxx
@@ -46,4 +48,9 @@ if (BUILD_CUDA)
                                         ./Point2D.cxx
                                         ${CMAKE_CURRENT_BINARY_DIR}/PointLocator.cu
                                         ${CMAKE_CURRENT_BINARY_DIR}/PointLocatorExec.cu)
+    cuda_add_executable(trilocate_cuda ${CMAKE_CURRENT_BINARY_DIR}/trilocate.cu
+                                       ./tests/TriangleMesh2DGenerator.cxx
+                                       ./Point2D.cxx)
+
+
 endif(BUILD_CUDA)
