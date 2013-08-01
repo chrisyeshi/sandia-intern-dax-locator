@@ -9,7 +9,7 @@
 
 #include "BinPoints.h"
 #include "Offset2CountFunctor.h"
-#include "Coarse2ImplicitFunctor.h"
+#include "Explicit2ImplicitIndex.h"
 
 typedef dax::cont::internal::DeviceAdapterAlgorithm<DAX_DEFAULT_DEVICE_ADAPTER_TAG> Algorithm;
 
@@ -29,23 +29,27 @@ typedef dax::cont::internal::DeviceAdapterAlgorithm<DAX_DEFAULT_DEVICE_ADAPTER_T
 
 PointLocator::PointLocator() : automatic(true), pointsPerBucket(3)
 {
+    grid.SetOrigin(dax::make_Vector3(0.0, 0.0, 0.0));
 }
 
 PointLocator::~PointLocator()
 {
 }
 
-void PointLocator::setDivisions(int x, int y, int z)
+void PointLocator::setDimensions(int x, int y, int z)
 {
-    this->divisions = dax::make_Id3(x, y, z);
+    dax::Vector3 bound = bounds();
+    this->grid.SetExtent(dax::make_Id3(0, 0, 0), dax::make_Id3(x, y, z));
+    this->setBounds(bound[0], bound[1], bound[2]);
 }
 
-void PointLocator::setExtent(int xmin, int xmax,
-                           int ymin, int ymax,
-                           int zmin, int zmax)
+void PointLocator::setBounds(float x, float y, float z)
 {
-    this->Extent.Min = dax::make_Id3(xmin, ymin, zmin);
-    this->Extent.Max = dax::make_Id3(xmax, ymax, zmax);
+    // get the manual dimensions, so we can't use dimensions() here
+    dax::Id3 dimensions = dax::extentCellDimensions(this->grid.GetExtent());
+    this->grid.SetSpacing(dax::make_Vector3(x / dimensions[0],
+                                            y / dimensions[1],
+                                            z / dimensions[2]));
 }
 
 void PointLocator::setPoints(const std::vector<dax::Vector3>& points)
@@ -110,9 +114,7 @@ std::vector<dax::Vector3> PointLocator::getBucketPoints(const dax::Id& bucketId)
 PointLocatorExec PointLocator::prepareExecutionObject() const
 {
     PointLocatorExec ret;
-    ret.setOrigin(origin());
-    ret.setSpacing(spacing());
-    ret.setExtent(extent());
+    ret.setTopology(this->grid.PrepareForInput());
     ret.setSortPoints(this->hSortPoints.PrepareForInput());
     ret.setPointStarts(this->hPointStarts.PrepareForInput());
     ret.setPointCounts(this->hPointCounts.PrepareForInput());
@@ -141,9 +143,9 @@ ArrayHandle<dax::Id> PointLocator::mapPoints2Bin()
     Scheduler<> scheduler;
     scheduler.Invoke(dax::worklet::BinPoints(),
                      this->hSortPoints,
-                     origin(),
-                     spacing(),
-                     extent(),
+                     this->grid.GetOrigin(),
+                     this->grid.GetSpacing(),
+                     this->grid.GetExtent(),
                      hOriBucketIds);
 
     return hOriBucketIds;
@@ -195,45 +197,36 @@ void PointLocator::formatBucketIds(ArrayHandle<dax::Id> hBucketIds)
     // parallel using the hUniqueBucketIds to input the
     // hPointStartIds and hBucketPointCounts into
     // hPointStart and hPointCount
-    Coarse2ImplicitFunctor coarse2Implicit(
+    Explicit2ImplicitIndex<dax::Id> convertPointStarts(
             hUniqueBucketIds.PrepareForInput(),
             hPointStartIds.PrepareForInput(),
+            this->hPointStarts.PrepareForOutput(cellCount));
+    Algorithm::Schedule(convertPointStarts, numUniqueKeys);
+    Explicit2ImplicitIndex<int> convertPointCounts(
+            hUniqueBucketIds.PrepareForInput(),
             hBucketPointCounts.PrepareForInput(),
-            this->hPointStarts.PrepareForOutput(cellCount),
             this->hPointCounts.PrepareForOutput(cellCount));
-    Algorithm::Schedule(coarse2Implicit, numUniqueKeys);
+    Algorithm::Schedule(convertPointCounts, numUniqueKeys);
 }
 
 dax::Id PointLocator::binPoint(const dax::Vector3& point) const
 {
-    return dax::worklet::BinPoints().bin(point, origin(), spacing(), extent());
+    dax::Vector3 origin = this->grid.GetOrigin();
+    dax::Vector3 spacing = this->grid.GetSpacing();
+    dax::Extent3 extent = this->grid.GetExtent();
+    return dax::worklet::BinPoints().bin(point, origin, spacing, extent);
 }
 
-dax::Vector3 PointLocator::origin() const
+dax::Vector3 PointLocator::bounds() const
 {
-    return dax::make_Vector3(extent().Min[0],
-                             extent().Min[1],
-                             extent().Min[2]);
+    dax::Vector3 spacing = this->grid.GetSpacing();
+    return dax::make_Vector3(spacing[0] * dimensions()[0],
+                             spacing[1] * dimensions()[1],
+                             spacing[2] * dimensions()[2]);
+
 }
 
-dax::Vector3 PointLocator::spacing() const
-{
-    // 0 3 0 3 0 3 and 3 3 3 ==> 1 1 1
-    dax::Id3 dims = dax::extentCellDimensions(extent());
-    // 3 3 3
-    dax::Vector3 spacing(dax::Scalar(dims[0]) / dax::Scalar(this->divs()[0]),
-                         dax::Scalar(dims[1]) / dax::Scalar(this->divs()[1]),
-                         dax::Scalar(dims[2]) / dax::Scalar(this->divs()[2]));
-    // 1 1 1
-    return spacing;
-}
-
-dax::Extent3 PointLocator::extent() const
-{
-    return this->Extent;
-}
-
-dax::Id3 PointLocator::divs() const
+dax::Id3 PointLocator::dimensions() const
 {
     // if automatic, calculate divisions base on pointsPerBucket
     if (this->automatic)
@@ -243,12 +236,12 @@ dax::Id3 PointLocator::divs() const
         return dax::Id3(level, level, level);
     }
     // if manual, use user specified divisions
-    return this->divisions;
+    return dax::extentCellDimensions(this->grid.GetExtent());
 }
 
 int PointLocator::numberOfCells() const
 {
-    return divs()[0] * divs()[1] * divs()[2];
+    return this->grid.GetNumberOfCells();
 }
 
 //////////////////////////////////////////////////////////////////////////////

@@ -6,6 +6,7 @@
 #include <dax/cont/arg/ExecutionObject.h>
 #include <dax/math/Precision.h>
 #include <dax/cont/ArrayHandle.h>
+#include <dax/cont/UniformGrid.h>
 
 #include "BinPoints.h"
 
@@ -14,17 +15,15 @@ using namespace dax::cont;
 class PointLocatorExec : public dax::exec::ExecutionObjectBase
 {
 public:
+    typedef dax::exec::internal::TopologyUniform TopologyStructConstExecution;
+
     PointLocatorExec();
-    PointLocatorExec(const dax::Vector3& origin,
-                     const dax::Vector3& spacing,
-                     const dax::Extent3& extent,
+    PointLocatorExec(TopologyStructConstExecution topology,
                      ArrayHandle<dax::Vector3>::PortalConstExecution sortPoints,
                      ArrayHandle<dax::Id>::PortalConstExecution pointStarts,
                      ArrayHandle<int>::PortalConstExecution pointCounts);
 
-    void setOrigin(const dax::Vector3& origin);
-    void setSpacing(const dax::Vector3& spacing);
-    void setExtent(const dax::Extent3& extent);
+    void setTopology(TopologyStructConstExecution topology);
     void setSortPoints(ArrayHandle<dax::Vector3>::PortalConstExecution sortPoints);
     void setPointStarts(ArrayHandle<dax::Id>::PortalConstExecution pointStarts);
     void setPointCounts(ArrayHandle<int>::PortalConstExecution pointCounts);
@@ -34,6 +33,7 @@ public:
     dax::Id getBucketId(const dax::Vector3& point) const
     {
         // make sure the point is within extent
+        dax::Extent3 extent = this->topology.Extent;
         if (point[0] < extent.Min[0] || point[0] > extent.Max[0]
          || point[1] < extent.Min[1] || point[1] > extent.Max[1]
          || point[2] < extent.Min[2] || point[2] > extent.Max[2])
@@ -106,9 +106,7 @@ public:
     }
 
 protected:
-    dax::Vector3 origin;
-    dax::Vector3 spacing;
-    dax::Extent3 extent;
+    TopologyStructConstExecution topology;
     ArrayHandle<dax::Vector3>::PortalConstExecution sortPoints;
     ArrayHandle<dax::Id>::PortalConstExecution pointStarts;
     ArrayHandle<int>::PortalConstExecution pointCounts;
@@ -130,6 +128,9 @@ protected:
     DAX_EXEC_EXPORT
     dax::Id binPoint(const dax::Vector3& point) const
     {
+        dax::Vector3 origin = this->topology.Origin;
+        dax::Vector3 spacing = this->topology.Spacing;
+        dax::Extent3 extent = this->topology.Extent;
         return dax::worklet::BinPoints().bin(point, origin, spacing, extent);
     }
 

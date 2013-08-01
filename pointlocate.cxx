@@ -31,8 +31,8 @@ int main(void)
 
     // use PointLocator class
     PointLocator locator;
-    locator.setDivisions(3, 3, 3);
-    locator.setExtent(0, 3, 0, 3, 0, 3);
+    locator.setDimensions(3, 3, 3);
+    locator.setBounds(3, 3, 3);
     locator.setPoints(daxPoints);
     locator.build();
 

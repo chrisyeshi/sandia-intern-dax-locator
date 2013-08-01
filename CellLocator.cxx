@@ -1,3 +1,5 @@
+#define BOOST_SP_DISABLE_THREADS
+
 #include "CellLocator.h"
 
 #include <dax/cont/internal/DeviceAdapterAlgorithm.h>
@@ -9,7 +11,7 @@
 #include "BinTriangle.h"
 #include "CountOverlappingBuckets.h"
 #include "Offset2CountFunctor.h"
-#include "Coarse2ImplicitFunctor.h"
+#include "Explicit2ImplicitIndex.h"
 
 typedef dax::cont::internal::DeviceAdapterAlgorithm<DAX_DEFAULT_DEVICE_ADAPTER_TAG>
     Algorithm;
@@ -109,13 +111,16 @@ void CellLocator::build()
     Algorithm::Copy(hCellStartInit, hCellStarts);
     ArrayHandleConstant<int> hCellCountInit(0, bucketCount());
     Algorithm::Copy(hCellCountInit, hCellCounts);
-    Coarse2ImplicitFunctor coarse2Implicit(
+    Explicit2ImplicitIndex<dax::Id> convertCellStarts(
             hUniqueBucketIds.PrepareForInput(),
             hCellStartIds.PrepareForInput(),
+            this->hCellStarts.PrepareForOutput(cellCount()));
+    Algorithm::Schedule(convertCellStarts, numUniqueKeys);
+    Explicit2ImplicitIndex<int> convertCellCounts(
+            hUniqueBucketIds.PrepareForInput(),
             hBucketCellCounts.PrepareForInput(),
-            hCellStarts.PrepareForOutput(bucketCount()),
-            hCellCounts.PrepareForOutput(bucketCount()));
-    Algorithm::Schedule(coarse2Implicit, numUniqueKeys);
+            this->hCellCounts.PrepareForOutput(cellCount()));
+    Algorithm::Schedule(convertCellCounts, numUniqueKeys);
 }
 
 std::vector<int> CellLocator::getOverlapBucketCounts() const

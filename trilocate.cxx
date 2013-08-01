@@ -7,7 +7,6 @@
 #include "tests/TriangleMesh2DGenerator.h"
 #include "CountOverlappingBuckets.h"
 #include "Offset2CountFunctor.h"
-#include "Coarse2ImplicitFunctor.h"
 
 using namespace dax::cont;
 
