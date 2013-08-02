@@ -9,7 +9,7 @@
 #include <dax/cont/ArrayHandleConstant.h>
 
 #include "BinTriangle.h"
-#include "CountOverlappingBuckets.h"
+#include "CountOverlapBuckets.h"
 #include "Offset2CountFunctor.h"
 #include "Explicit2ImplicitIndex.h"
 
@@ -36,19 +36,19 @@ CellLocator::~CellLocator()
 {
 }
 
-void CellLocator::setDivisions(int x, int y, int z)
+void CellLocator::setDimensions(int x, int y, int z)
 {
-    this->divisions[0] = x;
-    this->divisions[1] = y;
-    this->divisions[2] = z;
+    dax::Vector3 bound = bounds();
+    this->grid.SetExtent(dax::make_Id3(0, 0, 0), dax::make_Id3(x, y, z));
+    this->setBounds(bound[0], bound[1], bound[2]);
 }
 
-void CellLocator::setExtent(int xmin, int xmax,
-                            int ymin, int ymax,
-                            int zmin, int zmax)
+void CellLocator::setBounds(float x, float y, float z)
 {
-    this->extent.Min = dax::make_Id3(xmin, ymin, zmin);
-    this->extent.Max = dax::make_Id3(xmax, ymax, zmax);
+    dax::Id3 dimensions = dax::extentCellDimensions(this->grid.GetExtent());
+    this->grid.SetSpacing(dax::make_Vector3(x / dimensions[0],
+                                            y / dimensions[1],
+                                            z / dimensions[2]));
 }
 
 void CellLocator::setPoints(const std::vector<dax::Vector3>& points)
@@ -65,13 +65,12 @@ void CellLocator::build()
 {
     // construction of the uniform grid search structure
     // 1. find how many buckets each cell overlaps, declare memory
-    CountOverlappingBuckets countOverlappingBuckets(
+    CountOverlapBuckets countOverlapBuckets(
             hPoints.PrepareForInput(),
             hConnections.PrepareForInput(),
-            extent,
-            divisions,
+            grid.PrepareForInput(),
             hOverlapBucketCounts.PrepareForOutput(cellCount()));
-    Algorithm::Schedule(countOverlappingBuckets, cellCount());
+    Algorithm::Schedule(countOverlapBuckets, cellCount());
     // scan the hOverlapBucketCounts array to obtain the total length of the map,
     // also the sub sums can be used as index when mapping the cells.
     this->totalBucketCount = Algorithm::ScanExclusive(hOverlapBucketCounts,
@@ -82,8 +81,7 @@ void CellLocator::build()
             hPoints.PrepareForInput(),
             hConnections.PrepareForInput(),
             hScanBucketCounts.PrepareForInput(),
-            extent,
-            divisions,
+            grid.PrepareForInput(),
             hCellIds.PrepareForOutput(this->totalBucketCount),
             hBucketIds.PrepareForOutput(this->totalBucketCount));
     Algorithm::Schedule(binTriangles, cellCount());
@@ -114,12 +112,12 @@ void CellLocator::build()
     Explicit2ImplicitIndex<dax::Id> convertCellStarts(
             hUniqueBucketIds.PrepareForInput(),
             hCellStartIds.PrepareForInput(),
-            this->hCellStarts.PrepareForOutput(cellCount()));
+            this->hCellStarts.PrepareForOutput(bucketCount()));
     Algorithm::Schedule(convertCellStarts, numUniqueKeys);
     Explicit2ImplicitIndex<int> convertCellCounts(
             hUniqueBucketIds.PrepareForInput(),
             hBucketCellCounts.PrepareForInput(),
-            this->hCellCounts.PrepareForOutput(cellCount()));
+            this->hCellCounts.PrepareForOutput(bucketCount()));
     Algorithm::Schedule(convertCellCounts, numUniqueKeys);
 }
 
@@ -219,5 +217,18 @@ int CellLocator::cellCount() const
 
 int CellLocator::bucketCount() const
 {
-    return divisions[0] * divisions[1] * divisions[2];
+    return this->grid.GetNumberOfCells();
+}
+
+dax::Vector3 CellLocator::bounds() const
+{
+    dax::Vector3 spacing = this->grid.GetSpacing();
+    return dax::make_Vector3(spacing[0] * dimensions()[0],
+                             spacing[1] * dimensions()[1],
+                             spacing[2] * dimensions()[2]);
+}
+
+dax::Id3 CellLocator::dimensions() const
+{
+    return dax::extentCellDimensions(this->grid.GetExtent());
 }

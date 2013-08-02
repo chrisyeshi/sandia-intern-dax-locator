@@ -68,6 +68,10 @@ add_test(triangle_mesh_2d_test command ./triangle_mesh_2d_test)
 add_executable(explicit2implicitindex_test_serial ./explicit2implicitindex_test.cxx)
 add_test(explicit2implicitindex_test_serial command ./explicit2implicitindex_test_serial)
 
+# map point to bucket test
+add_executable(mappointtobucket_test_serial ./mappointtobucket_test.cxx)
+add_test(mappointtobucket_test_serial command ./mappointtobucket_test_serial)
+
 ##############################################################################
 #
 #

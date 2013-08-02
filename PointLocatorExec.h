@@ -9,6 +9,7 @@
 #include <dax/cont/UniformGrid.h>
 
 #include "BinPoints.h"
+#include "MapPointToBucket.h"
 
 using namespace dax::cont;
 
@@ -128,10 +129,7 @@ protected:
     DAX_EXEC_EXPORT
     dax::Id binPoint(const dax::Vector3& point) const
     {
-        dax::Vector3 origin = this->topology.Origin;
-        dax::Vector3 spacing = this->topology.Spacing;
-        dax::Extent3 extent = this->topology.Extent;
-        return dax::worklet::BinPoints().bin(point, origin, spacing, extent);
+        return MapPointToBucket(this->topology).MapToFlatIndex(point);
     }
 
 private:

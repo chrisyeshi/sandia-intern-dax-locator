@@ -5,7 +5,6 @@
 
 #include "CellLocator.h"
 #include "tests/TriangleMesh2DGenerator.h"
-#include "CountOverlappingBuckets.h"
 #include "Offset2CountFunctor.h"
 
 using namespace dax::cont;
@@ -34,8 +33,8 @@ int main(void)
 
     // using CellLocator for constructing the search structure
     CellLocator locator;
-    locator.setExtent(0, 6, 0, 6, 0, 0);
-    locator.setDivisions(2, 2, 1);
+    locator.setDimensions(2, 2, 1);
+    locator.setBounds(6, 6, 0);
     locator.setPoints(points);
     locator.setConnections(connections);
     locator.build();

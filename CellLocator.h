@@ -6,6 +6,7 @@
 #include <dax/Types.h>
 #include <dax/Extent.h>
 #include <dax/cont/Arrayhandle.h>
+#include <dax/cont/UniformGrid.h>
 
 using namespace dax::cont;
 
@@ -15,8 +16,8 @@ public:
     CellLocator();
     virtual ~CellLocator();
 
-    void setDivisions(int x, int y, int z);
-    void setExtent(int xmin, int xmax, int ymin, int ymax, int zmin, int zmax);
+    void setDimensions(int x, int y, int z);
+    void setBounds(float x, float y, float z);
     void setPoints(const std::vector<dax::Vector3>& points);
     void setConnections(const std::vector<dax::Id>& connections);
     void build();
@@ -36,8 +37,7 @@ public:
 protected:
     static const int verticesPerCell = 3;
 
-    dax::Id3 divisions;
-    dax::Extent3 extent;
+    UniformGrid<> grid;
     ArrayHandle<dax::Vector3> hPoints;
     ArrayHandle<dax::Id> hConnections;
     ArrayHandle<int> hOverlapBucketCounts;
@@ -55,6 +55,8 @@ protected:
 
     int cellCount() const;
     int bucketCount() const;
+    dax::Vector3 bounds() const;
+    dax::Id3 dimensions() const;
 
 private:
 };

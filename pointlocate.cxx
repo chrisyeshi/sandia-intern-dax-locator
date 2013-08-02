@@ -28,6 +28,22 @@ int main(void)
         dax::Vector3 daxvec(point.x(), point.y(), point.z());
         daxPoints[i] = daxvec;
     }
+    
+    // print input
+    std::cout << std::fixed;
+    std::cout.precision(4);
+    std::cout << std::setw(10) << "X: ";
+    for (unsigned int i = 0; i < daxPoints.size(); ++i)
+        std::cout << std::setw(6) << daxPoints[i][0] << ", ";
+    std::cout << std::endl;
+    std::cout << std::setw(10) << "Y: ";
+    for (unsigned int i = 0; i < daxPoints.size(); ++i)
+        std::cout << std::setw(6) << daxPoints[i][1] << ", ";
+    std::cout << std::endl;
+    std::cout << std::setw(10) << "Z: ";
+    for (unsigned int i = 0; i < daxPoints.size(); ++i)
+        std::cout << std::setw(6) << daxPoints[i][2] << ", ";
+    std::cout << std::endl;
 
     // use PointLocator class
     PointLocator locator;

@@ -8,6 +8,8 @@
 #include <dax/math/Precision.h>
 #include <dax/exec/WorkletMapField.h>
 
+#include "MapPointToBucket.h"
+
 namespace dax {
 namespace worklet {
 
@@ -25,26 +27,7 @@ public:
                        const dax::Vector3& spacing,
                        const dax::Extent3& extent) const
     {
-        return bin(point, origin, spacing, extent);
-    }
-
-    DAX_EXEC_CONT_EXPORT
-    dax::Id bin(const dax::Vector3& point,
-                const dax::Vector3& origin,
-                const dax::Vector3& spacing,
-                const dax::Extent3& extent) const
-    {
-        dax::Id3 dimensions = extentCellDimensions(extent);
-        // compute the point coordinate within the grid
-        dax::Vector3 coord(point[0] - origin[0],
-                           point[1] - origin[1],
-                           point[2] - origin[2]);
-        // which bucket the point belongs
-        dax::Id id[3];
-        for (int i = 0; i < 3; ++i)
-            id[i] = fabs(spacing[i]) < 0.0001 ?
-                0 : dax::math::Floor(coord[i] / spacing[i]);
-        return id[0] + id[1] * dimensions[0] + id[2] * dimensions[0] * dimensions[1];
+        return MapPointToBucket(origin, spacing, extent).MapToFlatIndex(point);
     }
 };
 

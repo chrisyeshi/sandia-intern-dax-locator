@@ -50,7 +50,8 @@ protected:
     // defaut to be 3
     int pointsPerBucket;
 
-    UniformGrid<> grid;
+    dax::Vector3 Bounds;
+    dax::Id3 Dimensions;
     ArrayHandle<dax::Id> hOriBucketIds;
     ArrayHandle<dax::Id> hBucketIds;
     ArrayHandle<dax::Vector3> hSortPoints;
@@ -67,7 +68,8 @@ protected:
 
     dax::Vector3 bounds() const;
     dax::Id3 dimensions() const;
-    int numberOfCells() const;
+    int bucketCount() const;
+    UniformGrid<> grid() const;
 
 private:
 };
