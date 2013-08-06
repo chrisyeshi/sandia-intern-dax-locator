@@ -1,3 +1,6 @@
+#ifndef __OFFSET2COUNTFUNCTOR_H__
+#define __OFFSET2COUNTFUNCTOR_H__
+
 #include <dax/exec/internal/WorkletBase.h>
 
 // This functor subtracts the current value to the previous value for each value
@@ -35,3 +38,5 @@ struct Offset2CountFunctor : dax::exec::internal::WorkletBase
       this->CountsPortal.Set(index, nextOffset - thisOffset);
     }
 };
+
+#endif //__OFFSET2COUNTFUNCTOR_H__

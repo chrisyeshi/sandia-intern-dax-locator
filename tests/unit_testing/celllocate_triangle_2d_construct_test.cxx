@@ -2,12 +2,13 @@
 
 #include <iostream>
 #include <iomanip>
-
-#include <dax/CellTag.h>
+#include <fstream>
+#include <sstream>
 
 #include "CellLocator.h"
 #include "tests/TriangleMesh2DGenerator.h"
 #include "Offset2CountFunctor.h"
+#include "tests/unit_testing/Help.h"
 
 using namespace dax::cont;
 
@@ -44,29 +45,33 @@ int main(void)
 
     // output and print for debugging
     // print
-    std::cout.precision(2);
-    std::cout << std::fixed;
+    std::stringstream ss;
+    ss.precision(2);
+    ss << std::fixed;
     
     // sort cells and sort buckets
     std::vector<dax::Id> sortTriangles = locator.getSortCellIds();
     // print
-    std::cout << std::setw(10) << "Sort Tri: ";
+    ss << std::setw(10) << "Sort Tri: ";
     for (int i = 0; i < sortTriangles.size(); ++i)
-        std::cout << std::setw(3) << sortTriangles[i] << ",";
-    std::cout << std::endl;
+        ss << std::setw(3) << sortTriangles[i] << ",";
+    ss << std::endl;
 
     // reduct buckets -- final format
     std::vector<dax::Id> triangleStarts = locator.getCellStarts();
     std::vector<int> triangleCounts = locator.getCellCounts();
     // print
-    std::cout << std::setw(10) << "Starts: ";
+    ss << std::setw(10) << "Starts: ";
     for (int i = 0; i < triangleStarts.size(); ++i)
-        std::cout << std::setw(3) << triangleStarts[i] << ",";
-    std::cout << std::endl;
-    std::cout << std::setw(10) << "Counts: ";
+        ss << std::setw(3) << triangleStarts[i] << ",";
+    ss << std::endl;
+    ss << std::setw(10) << "Counts: ";
     for (int i = 0; i < triangleCounts.size(); ++i)
-        std::cout << std::setw(3) << triangleCounts[i] << ",";
-    std::cout << std::endl;
+        ss << std::setw(3) << triangleCounts[i] << ",";
+    ss << std::endl;
+
+    // correct output
+    help::printCompare(ss.str(), "celllocate_triangle_2d_construct_correct_output.txt");
 
     return 0;
 }

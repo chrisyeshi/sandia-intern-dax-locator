@@ -52,12 +52,7 @@ protected:
 
     dax::Vector3 Bounds;
     dax::Id3 Dimensions;
-    ArrayHandle<dax::Id> hOriBucketIds;
-    ArrayHandle<dax::Id> hBucketIds;
     ArrayHandle<dax::Vector3> hSortPoints;
-    ArrayHandle<dax::Id> hUniqueBucketIds;
-    ArrayHandle<dax::Id> hPointStartIds;
-    ArrayHandle<int> hBucketPointCounts;
     ArrayHandle<dax::Id> hPointStarts;
     ArrayHandle<dax::Id> hPointCounts;
 

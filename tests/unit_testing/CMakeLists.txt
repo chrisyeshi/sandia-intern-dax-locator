@@ -72,6 +72,20 @@ add_test(explicit2implicitindex_test_serial command ./explicit2implicitindex_tes
 add_executable(mappointtobucket_test_serial ./mappointtobucket_test.cxx)
 add_test(mappointtobucket_test_serial command ./mappointtobucket_test_serial)
 
+# celllocate triangle 2d construction tests
+file(COPY ./celllocate_triangle_2d_construct_correct_output.txt DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+add_executable(celllocate_triangle_2d_construct_test ./celllocate_triangle_2d_construct_test.cxx
+                                                     ../TriangleMesh2DGenerator.cxx
+                                                     Help.cxx
+                                                     ../../Point2D.cxx
+                                                     ../../PointLocator.cxx
+                                                     ../../PointLocatorExec.cxx)
+add_test(celllocate_triangle_2d_construct_test command ./celllocate_triangle_2d_construct_test)
+
+# celllocate automatic triangle test - automatically calculate the grid parameters
+add_executable(celllocator_automatic_triangle_test ./celllocator_automatic_triangle_test.cxx)
+add_test(celllocator_automatic_triangle_test ./celllocator_automatic_triangle_test)
+
 ##############################################################################
 #
 #
