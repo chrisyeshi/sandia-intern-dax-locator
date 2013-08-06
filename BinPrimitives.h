@@ -1,3 +1,6 @@
+#include <iostream>
+#include <iomanip>
+
 #include <dax/Types.h>
 #include <dax/Extent.h>
 #include <dax/exec/internal/WorkletBase.h>
@@ -60,7 +63,7 @@ public:
         // bounding box of the primitive
         dax::Vector3 lowerLeft = vertices[0];
         dax::Vector3 upperRight = vertices[0];
-        for (int i = 0; i < verticesPerPrimitive; ++i)
+        for (int i = 1; i < verticesPerPrimitive; ++i)
         {
             lowerLeft = dax::math::Min<dax::Vector3>(lowerLeft, vertices[i]);
             upperRight = dax::math::Max<dax::Vector3>(upperRight, vertices[i]);

@@ -86,6 +86,10 @@ add_test(celllocate_triangle_2d_construct_test command ./celllocate_triangle_2d_
 add_executable(celllocator_automatic_triangle_test ./celllocator_automatic_triangle_test.cxx)
 add_test(celllocator_automatic_triangle_test ./celllocator_automatic_triangle_test)
 
+# celllocate construct with hexahedron test
+add_executable(celllocate_construct_test ./celllocate_construct_test.cxx)
+add_test(celllocate_construct_test ./celllocate_construct_test)
+
 ##############################################################################
 #
 #

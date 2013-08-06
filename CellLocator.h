@@ -2,6 +2,8 @@
 #define __CELLLOCATOR_H__
 
 #include <vector>
+#include <iostream>
+#include <iomanip>
 
 #include <dax/Types.h>
 #include <dax/Extent.h>
@@ -45,11 +47,19 @@ public:
         this->Bounds[2] = z;
     }
 
+    void setPoints(ArrayHandle<dax::Vector3> hPoints)
+    {
+        this->hPoints = hPoints;
+    }
     void setPoints(const std::vector<dax::Vector3>& points)
     {
         hPoints = make_ArrayHandle(points);
     }
 
+    void setConnections(ArrayHandle<dax::Id> hConnections)
+    {
+        this->hConnections = hConnections;
+    }
     void setConnections(const std::vector<dax::Id>& connections)
     {
         hConnections = make_ArrayHandle(connections);
@@ -69,7 +79,7 @@ public:
         ArrayHandle<int> hBucketCellCounts;
         // construction of the uniform grid search structure
         // 1. find how many buckets each cell overlaps, declare memory
-        CountOverlapBuckets countOverlapBuckets(
+        CountOverlapBuckets<CellTag> countOverlapBuckets(
                 hPoints.PrepareForInput(),
                 hConnections.PrepareForInput(),
                 grid().PrepareForInput(),
@@ -81,7 +91,7 @@ public:
                                                           hScanBucketCounts);
 
         // 2. map each cell to its overlapping buckets
-        BinPrimitives<dax::CellTagTriangle> binPrimitives(
+        BinPrimitives<CellTag> binPrimitives(
                 hPoints.PrepareForInput(),
                 hConnections.PrepareForInput(),
                 hScanBucketCounts.PrepareForInput(),
@@ -123,6 +133,54 @@ public:
                 hBucketCellCounts.PrepareForInput(),
                 this->hCellCounts.PrepareForOutput(bucketCount()));
         Algorithm::Schedule(convertCellCounts, numUniqueKeys);
+/*
+        // print for debug
+        // formatting
+        std::cout.precision(2);
+        std::cout << std::fixed;
+
+        std::vector<int> overlapBucketCounts(hOverlapBucketCounts.GetNumberOfValues());
+        hOverlapBucketCounts.CopyInto(overlapBucketCounts.begin());
+        std::cout << std::setw(22) << "Overlap Bucket Counts:";
+        for (unsigned int i = 0; i < overlapBucketCounts.size(); ++i)
+            std::cout << std::setw(3) << overlapBucketCounts[i] << ",";
+        std::cout << std::endl;
+
+        std::vector<int> scanBucketCounts(hScanBucketCounts.GetNumberOfValues());
+        hScanBucketCounts.CopyInto(scanBucketCounts.begin());
+        std::cout << std::setw(22) << "Scan Bucket Counts:";
+        for (unsigned int i = 0; i < scanBucketCounts.size(); ++i)
+            std::cout << std::setw(3) << scanBucketCounts[i] << ",";
+        std::cout << std::endl;
+
+        std::vector<int> cellIds(hCellIds.GetNumberOfValues());
+        hCellIds.CopyInto(cellIds.begin());
+        std::cout << std::setw(22) << "Cell Ids:";
+        for (unsigned int i = 0; i < cellIds.size(); ++i)
+            std::cout << std::setw(3) << cellIds[i] << ",";
+        std::cout << std::endl;
+
+        std::vector<int> bucketIds(hBucketIds.GetNumberOfValues());
+        hBucketIds.CopyInto(bucketIds.begin());
+        std::cout << std::setw(22) << "Bucket Ids:";
+        for (unsigned int i = 0; i < bucketIds.size(); ++i)
+            std::cout << std::setw(3) << bucketIds[i] << ",";
+        std::cout << std::endl;
+
+        std::vector<int> sortBucketIds(hSortBucketIds.GetNumberOfValues());
+        hSortBucketIds.CopyInto(sortBucketIds.begin());
+        std::cout << std::setw(22) << "Sort Bucket Ids:";
+        for (unsigned int i = 0; i < sortBucketIds.size(); ++i)
+            std::cout << std::setw(3) << sortBucketIds[i] << ",";
+        std::cout << std::endl;
+
+        std::vector<int> uniqueBucketIds(hUniqueBucketIds.GetNumberOfValues());
+        hUniqueBucketIds.CopyInto(uniqueBucketIds.begin());
+        std::cout << std::setw(22) << "Unique Bucket Ids:";
+        for (unsigned int i = 0; i < uniqueBucketIds.size(); ++i)
+            std::cout << std::setw(3) << uniqueBucketIds[i] << ",";
+        std::cout << std::endl;
+        */
     }
 
     std::vector<dax::Id> getSortCellIds() const

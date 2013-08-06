@@ -5,11 +5,14 @@
 #include <dax/math/Precision.h>
 #include <dax/exec/WorkletMapCell.h>
 #include <dax/exec/internal/TopologyUniform.h>
+#include <dax/CellTag.h>
+#include <dax/CellTraits.h>
 
 #include "MapPointToBucket.h"
 
 using namespace dax::cont;
 
+template <class CellTag>
 struct CountOverlapBuckets : dax::exec::WorkletMapCell
 {
     typedef dax::exec::internal::TopologyUniform TopologyStructConstExecution;
@@ -35,19 +38,19 @@ struct CountOverlapBuckets : dax::exec::WorkletMapCell
     {
         // ths index here is the index of the triangles
         // vertices of this triangle
-        const int verticesPerTriangle = 3;
-        dax::Id vertexIds[verticesPerTriangle];
-        dax::Vector3 vertices[verticesPerTriangle];
-        for (int i = 0; i < verticesPerTriangle; ++i)
+        const int numVertices = dax::CellTraits<CellTag>::NUM_VERTICES;
+        dax::Id vertexIds[numVertices];
+        dax::Vector3 vertices[numVertices];
+        for (int i = 0; i < numVertices; ++i)
         {
             vertexIds[i] = this->ConnectionsPortal
-                .Get(index * verticesPerTriangle + i);
+                .Get(index * numVertices + i);
             vertices[i] = this->PointsPortal.Get(vertexIds[i]);
         }
         // make bounding box of this triangle
         dax::Vector3 lowerLeft = vertices[0];
         dax::Vector3 upperRight = vertices[0];
-        for (int i = 1; i < verticesPerTriangle; ++i)
+        for (int i = 1; i < numVertices; ++i)
         {
             lowerLeft = dax::math::Min<dax::Vector3>(lowerLeft, vertices[i]);
             upperRight = dax::math::Max<dax::Vector3>(upperRight, vertices[i]);
