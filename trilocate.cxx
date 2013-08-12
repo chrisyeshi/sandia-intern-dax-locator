@@ -5,6 +5,7 @@
 
 #include <dax/CellTag.h>
 
+#include "CellLocatorExec.h"
 #include "CellLocator.h"
 #include "tests/TriangleMesh2DGenerator.h"
 #include "Offset2CountFunctor.h"

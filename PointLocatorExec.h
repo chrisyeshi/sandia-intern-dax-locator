@@ -35,9 +35,16 @@ public:
     {
         // make sure the point is within extent
         dax::Extent3 extent = this->topology.Extent;
-        if (point[0] < extent.Min[0] || point[0] > extent.Max[0]
-         || point[1] < extent.Min[1] || point[1] > extent.Max[1]
-         || point[2] < extent.Min[2] || point[2] > extent.Max[2])
+        dax::Vector3 spacing = this->topology.Spacing;
+        dax::Vector3 boundMin(extent.Min[0] * spacing[0],
+                              extent.Min[1] * spacing[1],
+                              extent.Min[2] * spacing[2]);
+        dax::Vector3 boundMax(extent.Max[0] * spacing[0],
+                              extent.Max[1] * spacing[1],
+                              extent.Max[2] * spacing[2]);
+        if (point[0] < boundMin[0] || point[0] > boundMax[0]
+         || point[1] < boundMin[1] || point[1] > boundMax[1]
+         || point[2] < boundMin[2] || point[2] > boundMax[2])
             return -1;
         // use the helper function from Binpoints.h to find the bucket id
         return binPoint(point);

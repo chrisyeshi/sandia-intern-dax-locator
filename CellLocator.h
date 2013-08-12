@@ -19,6 +19,7 @@
 #include "Explicit2ImplicitIndex.h"
 #include "BinPrimitives.h"
 #include "Offset2CountFunctor.h"
+#include "CellLocatorExec.h"
 
 using namespace dax::cont;
 
@@ -27,6 +28,8 @@ class CellLocator
 {
 public:
     typedef dax::cont::internal::DeviceAdapterAlgorithm<DAX_DEFAULT_DEVICE_ADAPTER_TAG> Algorithm;
+    typedef dax::exec::internal::TopologyUniform TopologyStructConstExecution;
+    typedef dax::exec::internal::TopologyUniform TopologyStructExecution;
 
     CellLocator() {}
     virtual ~CellLocator() {}
@@ -55,6 +58,12 @@ public:
     {
         hPoints = make_ArrayHandle(points);
     }
+    std::vector<dax::Vector3> getPoints() const
+    {
+        std::vector<dax::Vector3> ret(hPoints.GetNumberOfValues());
+        hPoints.CopyInto(ret.begin());
+        return ret;
+    }
 
     void setConnections(ArrayHandle<dax::Id> hConnections)
     {
@@ -63,6 +72,12 @@ public:
     void setConnections(const std::vector<dax::Id>& connections)
     {
         hConnections = make_ArrayHandle(connections);
+    }
+    std::vector<dax::Id> getConnections() const
+    {
+        std::vector<dax::Id> ret(hConnections.GetNumberOfValues());
+        hConnections.CopyInto(ret.begin());
+        return ret;
     }
 
     void build()
@@ -133,54 +148,6 @@ public:
                 hBucketCellCounts.PrepareForInput(),
                 this->hCellCounts.PrepareForOutput(bucketCount()));
         Algorithm::Schedule(convertCellCounts, numUniqueKeys);
-/*
-        // print for debug
-        // formatting
-        std::cout.precision(2);
-        std::cout << std::fixed;
-
-        std::vector<int> overlapBucketCounts(hOverlapBucketCounts.GetNumberOfValues());
-        hOverlapBucketCounts.CopyInto(overlapBucketCounts.begin());
-        std::cout << std::setw(22) << "Overlap Bucket Counts:";
-        for (unsigned int i = 0; i < overlapBucketCounts.size(); ++i)
-            std::cout << std::setw(3) << overlapBucketCounts[i] << ",";
-        std::cout << std::endl;
-
-        std::vector<int> scanBucketCounts(hScanBucketCounts.GetNumberOfValues());
-        hScanBucketCounts.CopyInto(scanBucketCounts.begin());
-        std::cout << std::setw(22) << "Scan Bucket Counts:";
-        for (unsigned int i = 0; i < scanBucketCounts.size(); ++i)
-            std::cout << std::setw(3) << scanBucketCounts[i] << ",";
-        std::cout << std::endl;
-
-        std::vector<int> cellIds(hCellIds.GetNumberOfValues());
-        hCellIds.CopyInto(cellIds.begin());
-        std::cout << std::setw(22) << "Cell Ids:";
-        for (unsigned int i = 0; i < cellIds.size(); ++i)
-            std::cout << std::setw(3) << cellIds[i] << ",";
-        std::cout << std::endl;
-
-        std::vector<int> bucketIds(hBucketIds.GetNumberOfValues());
-        hBucketIds.CopyInto(bucketIds.begin());
-        std::cout << std::setw(22) << "Bucket Ids:";
-        for (unsigned int i = 0; i < bucketIds.size(); ++i)
-            std::cout << std::setw(3) << bucketIds[i] << ",";
-        std::cout << std::endl;
-
-        std::vector<int> sortBucketIds(hSortBucketIds.GetNumberOfValues());
-        hSortBucketIds.CopyInto(sortBucketIds.begin());
-        std::cout << std::setw(22) << "Sort Bucket Ids:";
-        for (unsigned int i = 0; i < sortBucketIds.size(); ++i)
-            std::cout << std::setw(3) << sortBucketIds[i] << ",";
-        std::cout << std::endl;
-
-        std::vector<int> uniqueBucketIds(hUniqueBucketIds.GetNumberOfValues());
-        hUniqueBucketIds.CopyInto(uniqueBucketIds.begin());
-        std::cout << std::setw(22) << "Unique Bucket Ids:";
-        for (unsigned int i = 0; i < uniqueBucketIds.size(); ++i)
-            std::cout << std::setw(3) << uniqueBucketIds[i] << ",";
-        std::cout << std::endl;
-        */
     }
 
     std::vector<dax::Id> getSortCellIds() const
@@ -207,6 +174,72 @@ public:
     dax::Id3 getDimensions() const { return dimensions(); }
     UniformGrid<> getGrid() const { return grid(); }
 
+    // find the bucket id of the given point
+    dax::Id locateCell(const dax::Vector3& point) const
+    {
+        return MapPointToBucket(this->grid()).MapToFlatIndex(point);
+    }
+
+    // find all the cells that are in this bucket
+    std::vector<dax::Id> getBucketCells(const dax::Id& bucketId) const
+    {
+        // get std::vectors because we cannot access arrayhandle
+        std::vector<dax::Id> cellStarts = this->getCellStarts();
+        std::vector<int> cellCounts = this->getCellCounts();
+        std::vector<dax::Id> sortCellIds = this->getSortCellIds();
+        dax::Id start = cellStarts[bucketId];
+        int count = cellCounts[bucketId];
+        // use the start and count to index the hSortCellIds
+        std::vector<dax::Id> cellIds(count);
+        for (int i = 0; i < count; ++i)
+            cellIds[i] = sortCellIds[start + i];
+        return cellIds;
+    }
+
+    // given a cell id, find it's points, get connections is another function
+    std::vector<dax::Vector3> getCellPoints(const dax::Id& cellId) const
+    {
+        // get std::vectors because we are unable to access the arrayhandles
+        std::vector<dax::Id> connections = this->getConnections();
+        std::vector<dax::Vector3> points = this->getPoints();
+        // first get point id by querying the connections array,
+        // then index the points in the points array
+        std::vector<dax::Vector3> cellPoints(verticesPerCell());
+        for (int i = 0; i < verticesPerCell(); ++i)
+        {
+            dax::Id pointId = connections[cellId * verticesPerCell() + i];
+            cellPoints[i] = points[pointId];
+        }
+        // the points should be in the correct order
+        // because it follows the original order of the connections
+        return cellPoints;
+    }
+/*
+    // find cells by given a user defined point which is in the cell
+    std::vector<dax::Id> findCell(const dax::Vector3& point) const
+    {
+        std::vector<dax::Id> cells;
+        // find all the cells in the same bucket as the point
+        dax::Id bucketId = locateCell(point);
+        std::vector<dax::Id> cellIds = getBucketCells(bucketId);
+        // loop through all the cells and find if the point is in it
+        for (unsigned int i = 0; i < cellIds.size(); ++i)
+            if (PointInCell<CellTag>(point, getCellPoints(cellIds[i])))
+                cells.push_back(cellIds[i]);
+        return cells;
+    }
+*/
+    DAX_CONT_EXPORT
+    CellLocatorExec<CellTag> PrepareForInput()
+    {
+        return CellLocatorExec<CellTag>(grid().PrepareForInput(),
+                                        this->hPoints.PrepareForInput(),
+                                        this->hConnections.PrepareForInput(),
+                                        this->hSortCellIds.PrepareForInput(),
+                                        this->hCellStarts.PrepareForInput(),
+                                        this->hCellCounts.PrepareForInput());
+    }
+
 protected:
     // a constant parameter for automatically determining the grid dimensions
     static const int GridDensity = 5;
@@ -214,6 +247,14 @@ protected:
     bool Automatic;
     dax::Vector3 Bounds;
     dax::Id3 Dimensions;
+    // hPoints is referenced in hConnections, which follows the order of CellTag
+    // a cell is represented in hConnections by (cell id * vertices per cell)
+    // hSortCellIds then use (cell id) to index hConnections
+    // hSortCellIds is the cell ids sorted by buckets,
+    // there are replicates if a cell overlaps multiple buckets
+    // hCellStarts and hCellCounts index the hSortCellIds
+    // so for each bucket, we have the start index in hSortCellIds
+    // and how many cells are in this bucket.
     ArrayHandle<dax::Vector3> hPoints;
     ArrayHandle<dax::Id> hConnections;
     ArrayHandle<dax::Id> hSortCellIds;
@@ -228,6 +269,11 @@ protected:
     int bucketCount() const
     {
         return this->grid().GetNumberOfCells();
+    }
+
+    int verticesPerCell() const
+    {
+        return dax::CellTraits<CellTag>::NUM_VERTICES;
     }
 
     dax::Vector3 bounds() const { return this->Bounds; }
@@ -268,11 +314,6 @@ protected:
                                          bounds()[2] / dimensions()[2]));
         ret.SetExtent(dax::make_Id3(0, 0, 0), dimensions());
         return ret;
-    }
-
-    int verticesPerCell() const
-    {
-        return dax::CellTraits<CellTag>::NUM_VERTICES;
     }
 
 private:

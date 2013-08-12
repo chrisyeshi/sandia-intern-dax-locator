@@ -22,6 +22,8 @@ add_executable(locate ./locate.cxx ./tests/RandomPoints2D.cxx ./Point2D.cxx)
 add_executable(pointlocate_serial ./pointlocate.cxx ./tests/RandomPoints3D.cxx ./Point3D.cxx ./Point2D.cxx ./PointLocator.cxx ./PointLocatorExec.cxx)
 add_executable(pointlocateexec_serial ./pointlocateexec.cxx ./tests/RandomPoints3D.cxx ./Point3D.cxx ./Point2D.cxx ./PointLocator.cxx ./PointLocatorExec.cxx)
 add_executable(trilocate_serial ./trilocate.cxx ./tests/TriangleMesh2DGenerator.cxx ./Point2D.cxx)
+add_executable(celllocate_serial ./celllocateexec.cxx)
+add_executable(pointincell_tetrahedron_test ./pointincell_tetrahedron_test.cxx)
 
 # cuda executables
 if (BUILD_CUDA)
