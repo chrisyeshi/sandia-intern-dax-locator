@@ -131,8 +131,10 @@ bool PointInCell(const dax::Vector3& wCoord,
     dax::Vector3 pCoord
       = WorldCoordinatesToParametricCoordinates(vertices, wCoord,
                                                 dax::CellTagTriangle());
+    dax::Scalar p4 = pCoord[0] + pCoord[1];
     return pCoord[0] >= 0.0 && pCoord[0] <= 1.0 &&
-           pCoord[1] >= 0.0 && pCoord[1] <= 1.0;
+           pCoord[1] >= 0.0 && pCoord[1] <= 1.0 &&
+           p4 >= 0.0 && p4 <= 1.0;
 }
 
 template <>
