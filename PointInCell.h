@@ -74,7 +74,7 @@ bool PointInCell(const dax::Vector3& wCoord,
       = (a * wCoord[0] + b * wCoord[1] + c * wCoord[2] + d)
       / dax::math::Sqrt(a * a + b * b + c * c);
     // the point has to be reasonably close to the plane
-    if (distance > 0.0001)
+    if (fabs(distance) > 0.0001)
         return false;
     // then use parametric coordinates to see if the point is within the bounds
     dax::Vector3 pCoord
@@ -125,7 +125,7 @@ bool PointInCell(const dax::Vector3& wCoord,
       = (a * wCoord[0] + b * wCoord[1] + c * wCoord[2] + d)
       / dax::math::Sqrt(a * a + b * b + c * c);
     // the point has to be reasonably close to the plane
-    if (distance > 0.0001)
+    if (fabs(distance) > 0.0001)
         return false;
     // then use parametric coordinates to see if the point is within the bounds
     dax::Vector3 pCoord
@@ -135,6 +135,17 @@ bool PointInCell(const dax::Vector3& wCoord,
     return pCoord[0] >= 0.0 && pCoord[0] <= 1.0 &&
            pCoord[1] >= 0.0 && pCoord[1] <= 1.0 &&
            p4 >= 0.0 && p4 <= 1.0;
+}
+
+template <>
+DAX_EXEC_EXPORT
+bool PointInCell(const dax::Vector3& wCoord,
+                 CellField<dax::Vector3, dax::CellTagVertex> vertices)
+{
+    dax::Vector3 vertex = vertices[0];
+    return fabs(wCoord[0] - vertex[0]) < 0.0001 &&
+           fabs(wCoord[1] - vertex[1]) < 0.0001 &&
+           fabs(wCoord[2] - vertex[2]) < 0.0001;
 }
 
 template <>

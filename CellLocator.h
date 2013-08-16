@@ -199,6 +199,9 @@ public:
     // given a cell id, find it's points, get connections is another function
     std::vector<dax::Vector3> getCellPoints(const dax::Id& cellId) const
     {
+        // check for valid cellId
+        if (-1 == cellId)
+            return std::vector<dax::Vector3>();
         // get std::vectors because we are unable to access the arrayhandles
         std::vector<dax::Id> connections = this->getConnections();
         std::vector<dax::Vector3> points = this->getPoints();

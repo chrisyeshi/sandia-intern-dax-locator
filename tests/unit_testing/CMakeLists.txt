@@ -103,6 +103,10 @@ add_test(pointlocatorexec_getbucketid_extent_test command ./pointlocatorexec_get
 add_executable(pointincell_test_serial ./pointincell_test.cxx)
 add_test(pointincell_test_serial command ./pointincell_test_serial)
 
+# celllocatorexec test
+add_executable(celllocatorexec_test_serial ./celllocatorexec_test.cxx)
+add_test(celllocatorexec_test_serial command ./celllocatorexec_test_serial)
+
 ##############################################################################
 #
 #
@@ -123,6 +127,7 @@ if (BUILD_CUDA)
     configure_file(celllocate_construct_test.cxx ${CMAKE_CURRENT_BINARY_DIR}/celllocate_construct_test.cu COPYONLY)
     configure_file(celllocator_getcellpoints_test.cxx ${CMAKE_CURRENT_BINARY_DIR}/celllocator_getcellpoints_test.cu COPYONLY)
     configure_file(pointincell_test.cxx ${CMAKE_CURRENT_BINARY_DIR}/pointincell_test.cu COPYONLY)
+    configure_file(celllocatorexec_test.cxx ${CMAKE_CURRENT_BINARY_DIR}/celllocatorexec_test.cu COPYONLY)
 
     cuda_add_executable(daxlocator_output_test_cuda
                         ${CMAKE_CURRENT_BINARY_DIR}/daxlocator_output_test.cu
@@ -156,6 +161,7 @@ if (BUILD_CUDA)
     cuda_add_executable(celllocate_construct_test_cuda ${CMAKE_CURRENT_BINARY_DIR}/celllocate_construct_test.cu)
     cuda_add_executable(celllocator_getcellpoints_test_cuda ${CMAKE_CURRENT_BINARY_DIR}/celllocator_getcellpoints_test.cu)
     cuda_add_executable(pointincell_test_cuda ${CMAKE_CURRENT_BINARY_DIR}/pointincell_test.cu)
+    cuda_add_executable(celllocatorexec_test_cuda ${CMAKE_CURRENT_BINARY_DIR}/celllocatorexec_test.cu)
 
     add_test(pointlocator_output_cuda command ./daxlocator_output_test_cuda)
     add_test(pointlocate_2d_test_cuda command ./daxlocate_2d_test_cuda)
@@ -165,5 +171,6 @@ if (BUILD_CUDA)
     add_test(celllocate_construct_test_cuda command ./celllocate_construct_test_cuda)
     add_test(celllocator_getcellpoints_test_cuda command ./celllocator_getcellpoints_test_cuda)
     add_test(pointincell_test_cuda command ./pointincell_test_cuda)
+    add_test(celllocatorexec_test_cuda command ./celllocatorexec_test_cuda)
 
 endif (BUILD_CUDA)

@@ -75,8 +75,12 @@ struct TestWorklet : dax::exec::internal::WorkletBase
         vertices[3] = dax::make_Vector3(0.0, 1.0, 0.0);
         Assert(PointInCell(dax::make_Vector3(0.3, 0.9, 0.000001), vertices),
                "Quadrilateral inside test failed...", *this);
-        Assert(!PointInCell(dax::make_Vector3(1.1, 0.3, 0.4), vertices),
-               "Quadrilateral outside test failed...", *this);
+        Assert(!PointInCell(dax::make_Vector3(1.1, 0.3, 0.0), vertices),
+               "Quadrilateral outside test 1 failed...", *this);
+        Assert(!PointInCell(dax::make_Vector3(0.3, 0.8, 0.4), vertices),
+               "Quadrilateral outside test 2 failed...", *this);
+        Assert(!PointInCell(dax::make_Vector3(0.2, 0.4, -1.0), vertices),
+               "Quadrilateral outside test 3 failed...", *this);
     }
 
     DAX_EXEC_EXPORT
@@ -106,6 +110,8 @@ struct TestWorklet : dax::exec::internal::WorkletBase
                "Triangle outside test 1 failed...", *this);
         Assert(!PointInCell(dax::make_Vector3(0.3, 0.2, 0.5), vertices),
                "Triangle outside test 2 failed...", *this);
+        Assert(!PointInCell(dax::make_Vector3(0.3, 0.2, -0.5), vertices),
+               "Triangle outside test 3 failed...", *this);
     }
 
     DAX_EXEC_EXPORT
