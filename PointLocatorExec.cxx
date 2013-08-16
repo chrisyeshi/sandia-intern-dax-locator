@@ -18,34 +18,20 @@ PointLocatorExec::PointLocatorExec()
 {
 }
 
-PointLocatorExec::PointLocatorExec(const dax::Vector3& origin,
-                         const dax::Vector3& spacing,
-                         const dax::Extent3& extent,
+PointLocatorExec::PointLocatorExec(TopologyStructConstExecution topology,
                          ArrayHandle<dax::Vector3>::PortalConstExecution sortPoints,
                          ArrayHandle<dax::Id>::PortalConstExecution pointStarts,
                          ArrayHandle<int>::PortalConstExecution pointCounts)
-                       : origin(origin),
-                         spacing(spacing),
-                         extent(extent),
+                       : topology(topology),
                          sortPoints(sortPoints),
                          pointStarts(pointStarts),
                          pointCounts(pointCounts)
 {
 }
 
-void PointLocatorExec::setOrigin(const dax::Vector3& origin)
+void PointLocatorExec::setTopology(TopologyStructConstExecution topology)
 {
-    this->origin = origin;
-}
-
-void PointLocatorExec::setSpacing(const dax::Vector3& spacing)
-{
-    this->spacing = spacing;
-}
-
-void PointLocatorExec::setExtent(const dax::Extent3& extent)
-{
-    this->extent = extent;
+    this->topology = topology;
 }
 
 void PointLocatorExec::setSortPoints

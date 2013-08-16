@@ -2,8 +2,7 @@
 
 #include <iostream>
 #include <iomanip>
-#include <fstream>
-#include <sstream>
+#include <cassert>
 
 #include <dax/Types.h>
 #include <dax/cont/Scheduler.h>
@@ -13,16 +12,38 @@
 #include "Point3D.h"
 #include "tests/RandomPoints3D.h"
 #include "PointLocator.h"
-#include "tests/unit_testing/Help.h"
 
 using namespace dax::cont;
+
+// only runs in serial, so no cuda test
+struct VerifyGetBucketIdExtent : dax::exec::WorkletMapField
+{
+    // signatures
+    typedef void ControlSignature(Field(In), ExecObject(), Field(In));
+    typedef void ExecutionSignature(_1, _2, _3);
+
+    // overload operator()
+    template<typename ExecType>
+    DAX_EXEC_EXPORT
+    void operator()(const dax::Vector3& point,
+                    const ExecType& locator,
+                    const dax::Id& correctId) const
+    {
+        std::cout << std::setw(15) << "Point: " << point[0] << ", "
+                  << point[1] << ", " << point[2] << std::endl;
+        dax::Id id = locator.getBucketId(point);
+        std::cout << std::setw(15) << "Id: " << id << std::endl;
+        std::cout << std::setw(15) << "Correct Id: " << correctId << std::endl;
+        assert(id == correctId);
+    }
+};
 
 // main
 int main(void)
 {
     // first generate a bunch of random points
     RandomPoints3D random;
-    random.setExtent(0, 3, 0, 3, 0, 3);
+    random.setExtent(0, 6, 0, 6, 0, 6);
     random.setPointCount(20);
     random.generate();
     std::vector<Point3D> points = random.getPoints();
@@ -41,7 +62,7 @@ int main(void)
     PointLocator locator;
     locator.setAutomatic(false);
     locator.setDimensions(3, 3, 3);
-    locator.setBounds(3, 3, 3);
+    locator.setBounds(6, 6, 6);
     locator.setPoints(daxPoints);
     locator.build();
 
@@ -50,42 +71,28 @@ int main(void)
     std::vector<dax::Id> pointStarts = locator.getPointStarts();
     std::vector<int> pointCounts = locator.getPointCounts();
 
-    // print output to a stringstream for comparison purpose
-    std::stringstream ss;
-    ss.precision(4);
-    ss << std::fixed;
-    help::printStartCount(pointStarts, pointCounts, ss);
-
     // setup the PointLocatorExec, which is a ExecutionObject
     PointLocatorExec execLocator = locator.prepareExecutionObject();
 
-    // use the FindPointsWorklet to test the PointLocatorExec
+    // use VerifyGetBucketIdExtent
     // 1. create test inputs, which are points
-    std::vector<dax::Vector3> testPoints = daxPoints;
-    for (int i = 0; i < daxPoints.size() / 2; ++i)
-        testPoints.pop_back();
+    std::vector<dax::Vector3> testPoints;
     testPoints.push_back(dax::make_Vector3(0.0, 0.0, 0.0));
+    testPoints.push_back(dax::make_Vector3(2.0, 2.0, 2.0));
+    testPoints.push_back(dax::make_Vector3(5.0, 5.0, 5.0));
+    testPoints.push_back(dax::make_Vector3(6.1, 6.1, 6.1));
     ArrayHandle<dax::Vector3> hTestPoints = make_ArrayHandle(testPoints);
-    // 2. create output array handles
-    ArrayHandle<dax::Id> hTestBucketIds;
-    ArrayHandle<int> hTestCounts;
-    ArrayHandle<dax::Vector3> hTestCoinPoints;
+    // 2. create correct bucket id array
+    std::vector<dax::Id> testBuckets;
+    testBuckets.push_back(0);
+    testBuckets.push_back(13);
+    testBuckets.push_back(26);
+    testBuckets.push_back(-1);
+    ArrayHandle<dax::Id> hTestBuckets = make_ArrayHandle(testBuckets);
     // 3. run the worklet
     Scheduler<> scheduler;
-    scheduler.Invoke(help::FindPointsWorklet(), hTestPoints, execLocator,
-                     hTestBucketIds, hTestCounts, hTestCoinPoints);
-    // 4. copy the output
-    std::vector<dax::Id> testBucketIds(hTestBucketIds.GetNumberOfValues());
-    std::vector<int> testCounts(hTestCounts.GetNumberOfValues());
-    std::vector<dax::Vector3> testCoinPoints(hTestCoinPoints.GetNumberOfValues());
-    hTestBucketIds.CopyInto(testBucketIds.begin());
-    hTestCounts.CopyInto(testCounts.begin());
-    hTestCoinPoints.CopyInto(testCoinPoints.begin());
-    // 5. print
-    help::printCoinPoints(testPoints, testBucketIds, testCounts, testCoinPoints, ss);
-
-    // compare to the correct output
-    help::printCompare(ss.str(), "execlocate_correct_output.txt");
+    scheduler.Invoke(VerifyGetBucketIdExtent(),
+                     hTestPoints, execLocator, hTestBuckets);
 
     return 0;
 }

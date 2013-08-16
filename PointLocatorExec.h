@@ -6,25 +6,25 @@
 #include <dax/cont/arg/ExecutionObject.h>
 #include <dax/math/Precision.h>
 #include <dax/cont/ArrayHandle.h>
+#include <dax/cont/UniformGrid.h>
 
 #include "BinPoints.h"
+#include "MapPointToBucket.h"
 
 using namespace dax::cont;
 
 class PointLocatorExec : public dax::exec::ExecutionObjectBase
 {
 public:
+    typedef dax::exec::internal::TopologyUniform TopologyStructConstExecution;
+
     PointLocatorExec();
-    PointLocatorExec(const dax::Vector3& origin,
-                     const dax::Vector3& spacing,
-                     const dax::Extent3& extent,
+    PointLocatorExec(TopologyStructConstExecution topology,
                      ArrayHandle<dax::Vector3>::PortalConstExecution sortPoints,
                      ArrayHandle<dax::Id>::PortalConstExecution pointStarts,
                      ArrayHandle<int>::PortalConstExecution pointCounts);
 
-    void setOrigin(const dax::Vector3& origin);
-    void setSpacing(const dax::Vector3& spacing);
-    void setExtent(const dax::Extent3& extent);
+    void setTopology(TopologyStructConstExecution topology);
     void setSortPoints(ArrayHandle<dax::Vector3>::PortalConstExecution sortPoints);
     void setPointStarts(ArrayHandle<dax::Id>::PortalConstExecution pointStarts);
     void setPointCounts(ArrayHandle<int>::PortalConstExecution pointCounts);
@@ -34,9 +34,17 @@ public:
     dax::Id getBucketId(const dax::Vector3& point) const
     {
         // make sure the point is within extent
-        if (point[0] < extent.Min[0] || point[0] > extent.Max[0]
-         || point[1] < extent.Min[1] || point[1] > extent.Max[1]
-         || point[2] < extent.Min[2] || point[2] > extent.Max[2])
+        dax::Extent3 extent = this->topology.Extent;
+        dax::Vector3 spacing = this->topology.Spacing;
+        dax::Vector3 boundMin(extent.Min[0] * spacing[0],
+                              extent.Min[1] * spacing[1],
+                              extent.Min[2] * spacing[2]);
+        dax::Vector3 boundMax(extent.Max[0] * spacing[0],
+                              extent.Max[1] * spacing[1],
+                              extent.Max[2] * spacing[2]);
+        if (point[0] < boundMin[0] || point[0] > boundMax[0]
+         || point[1] < boundMin[1] || point[1] > boundMax[1]
+         || point[2] < boundMin[2] || point[2] > boundMax[2])
             return -1;
         // use the helper function from Binpoints.h to find the bucket id
         return binPoint(point);
@@ -106,9 +114,7 @@ public:
     }
 
 protected:
-    dax::Vector3 origin;
-    dax::Vector3 spacing;
-    dax::Extent3 extent;
+    TopologyStructConstExecution topology;
     ArrayHandle<dax::Vector3>::PortalConstExecution sortPoints;
     ArrayHandle<dax::Id>::PortalConstExecution pointStarts;
     ArrayHandle<int>::PortalConstExecution pointCounts;
@@ -130,7 +136,7 @@ protected:
     DAX_EXEC_EXPORT
     dax::Id binPoint(const dax::Vector3& point) const
     {
-        return dax::worklet::BinPoints().bin(point, origin, spacing, extent);
+        return MapPointToBucket(this->topology).MapToFlatIndex(point);
     }
 
 private:

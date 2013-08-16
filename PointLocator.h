@@ -21,8 +21,8 @@ public:
 
     void setAutomatic(bool automatic) { this->automatic = automatic; }
     void setPointsPerBucket(int ppb) { pointsPerBucket = ppb; }
-    void setDivisions(int x, int y, int z);
-    void setExtent(int xmin, int xmax, int ymin, int ymax, int zmin, int zmax);
+    void setDimensions(int x, int y, int z);
+    void setBounds(float x, float y, float z);
     void setPoints(const std::vector<dax::Vector3>& points);
     void build();
 
@@ -30,7 +30,7 @@ public:
     // after you setPoints,
     // it returns the number of cells per dimension depending on
     // whether it's automatic mode or manual mode
-    dax::Id3 getDivs() const { return divs(); }
+    dax::Id3 getDimensions() const { return dimensions(); }
     std::vector<dax::Vector3> getSortPoints() const;
     std::vector<dax::Id> getPointStarts() const;
     std::vector<int> getPointCounts() const;
@@ -50,14 +50,9 @@ protected:
     // defaut to be 3
     int pointsPerBucket;
 
-    dax::Id3 divisions;
-    dax::Extent3 Extent;
-    ArrayHandle<dax::Id> hOriBucketIds;
-    ArrayHandle<dax::Id> hBucketIds;
+    dax::Vector3 Bounds;
+    dax::Id3 Dimensions;
     ArrayHandle<dax::Vector3> hSortPoints;
-    ArrayHandle<dax::Id> hUniqueBucketIds;
-    ArrayHandle<dax::Id> hPointStartIds;
-    ArrayHandle<int> hBucketPointCounts;
     ArrayHandle<dax::Id> hPointStarts;
     ArrayHandle<dax::Id> hPointCounts;
 
@@ -66,11 +61,10 @@ protected:
     void formatBucketIds(ArrayHandle<dax::Id> hBucketIds);
     dax::Id binPoint(const dax::Vector3& point) const;
 
-    dax::Vector3 origin() const;
-    dax::Vector3 spacing() const;
-    dax::Extent3 extent() const;
-    dax::Id3 divs() const;
-    int numberOfCells() const;
+    dax::Vector3 bounds() const;
+    dax::Id3 dimensions() const;
+    int bucketCount() const;
+    UniformGrid<> grid() const;
 
 private:
 };
