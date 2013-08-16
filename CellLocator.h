@@ -34,6 +34,17 @@ public:
     CellLocator() {}
     virtual ~CellLocator() {}
 
+    ///////////////////////////////////////////////////////////////////////////////
+    //
+    //
+    //
+    //
+    // Inteface for Setting Up the Structure
+    //
+    //
+    //
+    //
+    ///////////////////////////////////////////////////////////////////////////////
     void setAutomatic(bool automatic) { this->Automatic = automatic; }
 
     void setDimensions(int x, int y, int z)
@@ -150,6 +161,17 @@ public:
         Algorithm::Schedule(convertCellCounts, numUniqueKeys);
     }
 
+    ///////////////////////////////////////////////////////////////////////////////
+    //
+    //
+    //
+    //
+    // Interface for Outputing, Locating, and Dubugging
+    //
+    //
+    //
+    //
+    ///////////////////////////////////////////////////////////////////////////////
     std::vector<dax::Id> getSortCellIds() const
     {
         std::vector<dax::Id> ret(hSortCellIds.GetNumberOfValues());
